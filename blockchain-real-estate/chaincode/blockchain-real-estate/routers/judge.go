@@ -7,10 +7,13 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/togettoyou/blockchain-real-estate/chaincode/blockchain-real-estate/lib"
-	"github.com/togettoyou/blockchain-real-estate/chaincode/blockchain-real-estate/utils"
 )
 
 func JudgeOwnToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 2 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
 	userId := args[0]
 	tokenId := args[1]
 
@@ -22,22 +25,14 @@ func JudgeOwnToken(stub shim.ChaincodeStubInterface, args []string) pb.Response 
 	}
 
 	var user lib.User
-	result, err := utils.GetStateByPartialCompositeKeys(stub, lib.UserKey, args)
+	err := json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &user)
 	if err != nil {
 		return shim.Error("The user does not exist.")
 	}
-	err = json.Unmarshal(result[0], &user)
-	if err != nil {
-		shim.Error(fmt.Sprintf("%s", err))
-	}
 	var token lib.Token
-	result, err = utils.GetStateByPartialCompositeKeys(stub, lib.TokenKey, args)
+	err = json.Unmarshal(ReadToken(stub, []string{tokenId}).Payload, &token)
 	if err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
-	}
-	err = json.Unmarshal(result[0], &token)
-	if err != nil {
-		shim.Error(fmt.Sprintf("%s", err))
 	}
 
 	for _, v := range user.Control {
@@ -54,6 +49,10 @@ func JudgeOwnToken(stub shim.ChaincodeStubInterface, args []string) pb.Response 
 }
 
 func JudgeBuyResource(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 2 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
 	userId := args[0]
 	resourceId := args[1]
 
@@ -65,22 +64,14 @@ func JudgeBuyResource(stub shim.ChaincodeStubInterface, args []string) pb.Respon
 	}
 
 	var user lib.User
-	result, err := utils.GetStateByPartialCompositeKeys(stub, lib.UserKey, args)
+	err := json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &user)
 	if err != nil {
 		return shim.Error("The user does not exist.")
 	}
-	err = json.Unmarshal(result[0], &user)
-	if err != nil {
-		shim.Error(fmt.Sprintf("%s", err))
-	}
 	var resource lib.Resource
-	result, err = utils.GetStateByPartialCompositeKeys(stub, lib.ResourceKey, args)
+	err = json.Unmarshal(QueryResource(stub, []string{resourceId}).Payload, &resource)
 	if err != nil {
 		return shim.Error("The resource does not exist")
-	}
-	err = json.Unmarshal(result[0], &resource)
-	if err != nil {
-		shim.Error(fmt.Sprintf("%s", err))
 	}
 
 	for _, v := range user.Buy {
@@ -97,6 +88,10 @@ func JudgeBuyResource(stub shim.ChaincodeStubInterface, args []string) pb.Respon
 }
 
 func JudgeOwnResource(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 2 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
 	userId := args[0]
 	resourceId := args[1]
 
@@ -108,22 +103,14 @@ func JudgeOwnResource(stub shim.ChaincodeStubInterface, args []string) pb.Respon
 	}
 
 	var user lib.User
-	result, err := utils.GetStateByPartialCompositeKeys(stub, lib.UserKey, args)
+	err := json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &user)
 	if err != nil {
 		return shim.Error("The user does not exist.")
 	}
-	err = json.Unmarshal(result[0], &user)
-	if err != nil {
-		shim.Error(fmt.Sprintf("%s", err))
-	}
 	var resource lib.Resource
-	result, err = utils.GetStateByPartialCompositeKeys(stub, lib.ResourceKey, args)
+	err = json.Unmarshal(QueryResource(stub, []string{resourceId}).Payload, &resource)
 	if err != nil {
 		return shim.Error("The resource does not exist")
-	}
-	err = json.Unmarshal(result[0], &resource)
-	if err != nil {
-		shim.Error(fmt.Sprintf("%s", err))
 	}
 
 	var token lib.Token
@@ -143,6 +130,10 @@ func JudgeOwnResource(stub shim.ChaincodeStubInterface, args []string) pb.Respon
 }
 
 func JudgeShareResource(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 2 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
 	userId := args[0]
 	resourceId := args[1]
 
@@ -154,22 +145,14 @@ func JudgeShareResource(stub shim.ChaincodeStubInterface, args []string) pb.Resp
 	}
 
 	var user lib.User
-	result, err := utils.GetStateByPartialCompositeKeys(stub, lib.UserKey, args)
+	err := json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &user)
 	if err != nil {
 		return shim.Error("The user does not exist.")
 	}
-	err = json.Unmarshal(result[0], &user)
-	if err != nil {
-		shim.Error(fmt.Sprintf("%s", err))
-	}
 	var resource lib.Resource
-	result, err = utils.GetStateByPartialCompositeKeys(stub, lib.ResourceKey, args)
+	err = json.Unmarshal(QueryResource(stub, []string{resourceId}).Payload, &resource)
 	if err != nil {
 		return shim.Error("The resource does not exist")
-	}
-	err = json.Unmarshal(result[0], &resource)
-	if err != nil {
-		shim.Error(fmt.Sprintf("%s", err))
 	}
 
 	var token lib.Token
@@ -189,6 +172,10 @@ func JudgeShareResource(stub shim.ChaincodeStubInterface, args []string) pb.Resp
 }
 
 func JudgeShareToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 2 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
 	userId := args[0]
 	tokenId := args[1]
 
@@ -200,22 +187,14 @@ func JudgeShareToken(stub shim.ChaincodeStubInterface, args []string) pb.Respons
 	}
 
 	var user lib.User
-	result, err := utils.GetStateByPartialCompositeKeys(stub, lib.UserKey, args)
+	err := json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &user)
 	if err != nil {
 		return shim.Error("The user does not exist.")
 	}
-	err = json.Unmarshal(result[0], &user)
-	if err != nil {
-		shim.Error(fmt.Sprintf("%s", err))
-	}
 	var token lib.Token
-	result, err = utils.GetStateByPartialCompositeKeys(stub, lib.TokenKey, args)
+	err = json.Unmarshal(ReadToken(stub, []string{tokenId}).Payload, &token)
 	if err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
-	}
-	err = json.Unmarshal(result[0], &token)
-	if err != nil {
-		shim.Error(fmt.Sprintf("%s", err))
 	}
 
 	for _, v := range user.Share {
