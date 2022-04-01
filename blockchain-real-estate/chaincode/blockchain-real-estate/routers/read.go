@@ -7,18 +7,19 @@ import (
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/togettoyou/blockchain-real-estate/chaincode/blockchain-real-estate/lib"
 	"github.com/togettoyou/blockchain-real-estate/chaincode/blockchain-real-estate/utils"
-	"reflect"
 	//"github.com/togettoyou/blockchain-real-estate/chaincode/blockchain-real-estate/utils"
 )
 
 //查询某用户上传资源
 func QueryUpload(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
 	var resourcelist []string
 	var account lib.User
 	id := args[0]
-	if reflect.TypeOf(id).Name() != "string" {
-		return shim.Error("Please check the type of input.")
-	}
+
 	if id == "" {
 		return shim.Error("Please offer the user id.")
 	}
@@ -41,12 +42,13 @@ func QueryUpload(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 }
 
 func QueryBuyResources(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
 	var resourcelist []string
 	var account lib.User
 	id := args[0]
-	if reflect.TypeOf(id).Name() != "string" {
-		return shim.Error("Please check the type of input.")
-	}
 	if id == "" {
 		return shim.Error("Please offer the user id.")
 	}
@@ -69,6 +71,10 @@ func QueryBuyResources(stub shim.ChaincodeStubInterface, args []string) pb.Respo
 }
 
 func QueryAccount(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
 	var account lib.User //其实就一个
 	id := args[0]
 	if id == "" {
@@ -96,17 +102,21 @@ func QueryAccount(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 }
 
 func QueryResource(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
 	var resource lib.Resource //其实就一个
 	id := args[0]
-	if reflect.TypeOf(id).Name() != "string" {
-		return shim.Error("Please check the type of input.")
-	}
 	if id == "" {
 		return shim.Error("Please offer the resource id.")
 	}
 	result, err := utils.GetStateByPartialCompositeKeys(stub, lib.ResourceKey, args)
 	if err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if result == nil {
+		return shim.Error("The resource does not exist.")
 	}
 	err = json.Unmarshal(result[0], &resource)
 	if err != nil {
@@ -121,10 +131,17 @@ func QueryResource(stub shim.ChaincodeStubInterface, args []string) pb.Response 
 }
 
 func QueryAllAccount(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 0 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
 	var accountList []lib.User
 	results, err := utils.GetStateByPartialCompositeKeys(stub, lib.UserKey, args)
 	if err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if results == nil {
+		return shim.Error("There are no accounts now.")
 	}
 
 	for _, v := range results {
@@ -146,10 +163,17 @@ func QueryAllAccount(stub shim.ChaincodeStubInterface, args []string) pb.Respons
 }
 
 func QueryAllResource(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 0 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
 	var resourcelist []lib.Resource
 	results, err := utils.GetStateByPartialCompositeKeys(stub, lib.ResourceKey, args)
 	if err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if results == nil {
+		return shim.Error("There are no resources now.")
 	}
 
 	for _, v := range results {
@@ -206,10 +230,11 @@ func QueryDealResource(stub shim.ChaincodeStubInterface, args []string) pb.Respo
 }
 
 func ReadToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	id := args[0]
-	if reflect.TypeOf(id).Name() != "string" {
-		return shim.Error("Please check the type of input.")
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
 	}
+
+	id := args[0]
 	if id == "" {
 		return shim.Error("Please offer the token id.")
 	}
@@ -217,6 +242,9 @@ func ReadToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	result, err := utils.GetStateByPartialCompositeKeys(stub, lib.TokenKey, args)
 	if err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if result == nil {
+		return shim.Error("The token does not exist.")
 	}
 	err = json.Unmarshal(result[0], &token)
 	if err != nil {
@@ -230,10 +258,11 @@ func ReadToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 }
 
 func GetUserTokenList(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	id := args[0] //传入用户的id
-	if reflect.TypeOf(id).Name() != "string" {
-		return shim.Error("Please check the type of input.")
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
 	}
+
+	id := args[0] //传入用户的id
 	if id == "" {
 		return shim.Error("Please offer the user id.")
 	}
@@ -241,6 +270,9 @@ func GetUserTokenList(stub shim.ChaincodeStubInterface, args []string) pb.Respon
 	result, err := utils.GetStateByPartialCompositeKeys(stub, lib.UserKey, args)
 	if err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if result == nil {
+		return shim.Error("The user does not exist.")
 	}
 	err = json.Unmarshal(result[0], &account)
 	if err != nil {
@@ -255,14 +287,6 @@ func GetUserTokenList(stub shim.ChaincodeStubInterface, args []string) pb.Respon
 		}
 		tokenList = append(tokenList, token)
 	}
-	/*for _, v := range account.Buy {
-		var token lib.Token
-		err := json.Unmarshal(ReadToken(stub, []string{v}).Payload, &token)
-		if err != nil {
-			shim.Error(fmt.Sprintf("%s", err))
-		}
-		tokenList = append(tokenList, token)
-	}*/
 	tokenListByte, err := json.Marshal(tokenList)
 	if err != nil {
 		return shim.Error(fmt.Sprintf("getUserTokenList-序列化出错: %s", err))
@@ -270,49 +294,189 @@ func GetUserTokenList(stub shim.ChaincodeStubInterface, args []string) pb.Respon
 	return shim.Success(tokenListByte)
 }
 
-/*func JudgeOwnToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+//查询用户目前有人投标的代币
+func QueryUserBiddenToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
 	userId := args[0]
-	tokenId := args[1]
 
-	if reflect.TypeOf(tokenId).Name() != "string" || reflect.TypeOf(userId).Name() != "string" {
-		return shim.Error("Please check the type of input.")
-	}
-
-	if tokenId == "" {
-		return shim.Error("Please offer the token id.")
-	}
 	if userId == "" {
 		return shim.Error("Please offer the user id.")
 	}
 
 	var user lib.User
-	result, err := utils.GetStateByPartialCompositeKeys(stub, lib.UserKey, args)
+	err := json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &user)
 	if err != nil {
 		return shim.Error("The user does not exist.")
 	}
-	err = json.Unmarshal(result[0], &user)
-	if err != nil {
-		shim.Error(fmt.Sprintf("%s", err))
-	}
+
+	var tokenList []lib.Token
 	var token lib.Token
-	result, err = utils.GetStateByPartialCompositeKeys(stub, lib.TokenKey, args)
-	if err != nil {
-		return shim.Error(fmt.Sprintf("%s", err))
-	}
-	err = json.Unmarshal(result[0], &token)
-	if err != nil {
-		shim.Error(fmt.Sprintf("%s", err))
-	}
 
 	for _, v := range user.Control {
-		if v == tokenId {
-			tokenByte, err := json.Marshal(token)
-			if err != nil {
-				return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
-			}
-			return shim.Success(tokenByte)
+		err := json.Unmarshal(ReadToken(stub, []string{v}).Payload, &token)
+		if err != nil {
+			shim.Error(fmt.Sprintf("%s", err))
+		}
+		if token.Bid != "" {
+			tokenList = append(tokenList, token)
 		}
 	}
 
-	return shim.Error("The user does not own the token.")
-}*/
+	tokenListByte, err := json.Marshal(tokenList)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("getUserTokenList-序列化出错: %s", err))
+	}
+	return shim.Success(tokenListByte)
+}
+
+//查询当前用户拥有的资源（通过控制的代币查询）
+func QueryUserResource(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	userId := args[0]
+
+	if userId == "" {
+		return shim.Error("Please offer the user id.")
+	}
+
+	var user lib.User
+	err := json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &user)
+	if err != nil {
+		return shim.Error("The user does not exist.")
+	}
+
+	var resourceList []lib.Resource
+	var token lib.Token
+	var resource lib.Resource
+
+	for _, v := range user.Control {
+		err := json.Unmarshal(ReadToken(stub, []string{v}).Payload, &token)
+		if err != nil {
+			shim.Error(fmt.Sprintf("%s", err))
+		}
+		err = json.Unmarshal(QueryResource(stub, []string{token.Asset}).Payload, &resource)
+		if err != nil {
+			shim.Error(fmt.Sprintf("%s", err))
+		}
+		resourceList = append(resourceList, resource)
+	}
+
+	resourceListByte, err := json.Marshal(resourceList)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("getUserTokenList-序列化出错: %s", err))
+	}
+	return shim.Success(resourceListByte)
+}
+
+//查询用户被分享的代币
+func QueryUserSharedToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	userId := args[0]
+
+	if userId == "" {
+		return shim.Error("Please offer the user id.")
+	}
+
+	var user lib.User
+	err := json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &user)
+	if err != nil {
+		return shim.Error("The user does not exist.")
+	}
+
+	var tokenList []lib.Token
+	var token lib.Token
+
+	for _, v := range user.Share {
+		err := json.Unmarshal(ReadToken(stub, []string{v}).Payload, &token)
+		if err != nil {
+			shim.Error(fmt.Sprintf("%s", err))
+		}
+		tokenList = append(tokenList, token)
+	}
+
+	tokenListByte, err := json.Marshal(tokenList)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("getUserTokenList-序列化出错: %s", err))
+	}
+	return shim.Success(tokenListByte)
+}
+
+//查询用户分享给他人的代币
+func QueryUserLendToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	userId := args[0]
+
+	if userId == "" {
+		return shim.Error("Please offer the user id.")
+	}
+
+	var user lib.User
+	err := json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &user)
+	if err != nil {
+		return shim.Error("The user does not exist.")
+	}
+
+	var tokenList []lib.Token
+	var token lib.Token
+
+	for _, v := range user.Lend {
+		err := json.Unmarshal(ReadToken(stub, []string{v}).Payload, &token)
+		if err != nil {
+			shim.Error(fmt.Sprintf("%s", err))
+		}
+		tokenList = append(tokenList, token)
+	}
+
+	tokenListByte, err := json.Marshal(tokenList)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("getUserTokenList-序列化出错: %s", err))
+	}
+	return shim.Success(tokenListByte)
+}
+
+//查询代币分享给哪些用户
+func QueryTokenShare(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	tokenId := args[0]
+
+	if tokenId == "" {
+		return shim.Error("Please offer the user id.")
+	}
+
+	var token lib.Token
+	err := json.Unmarshal(ReadToken(stub, []string{tokenId}).Payload, &token)
+	if err != nil {
+		return shim.Error("The user does not exist.")
+	}
+
+	var userList []lib.User
+	var user lib.User
+
+	for _, v := range token.Share {
+		err := json.Unmarshal(QueryAccount(stub, []string{v}).Payload, &user)
+		if err != nil {
+			shim.Error(fmt.Sprintf("%s", err))
+		}
+		userList = append(userList, user)
+	}
+
+	userListByte, err := json.Marshal(userList)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("getUserTokenList-序列化出错: %s", err))
+	}
+	return shim.Success(userListByte)
+}

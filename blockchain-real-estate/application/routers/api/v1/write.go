@@ -16,60 +16,58 @@ import (
 	"net/http"
 )
 
-type Resource struct{
+type Resource struct {
 	//ObjectType string    `json:"docType"` //用于CouchDB
-	Id         string    `json:"id"` //资源在关系型数据库中的id，从id中可知类型
-	Hash	   string     `json:"Hash"`//文件在IPFS系统中的Hash值
-	Uploader   string    `json:"Uploader"`//标记卖方id
-	Time	   string	`json:"Time"`//标记上链时间
-	Cost       float64   `json:"Cost"`//交易需要话费的积分，可设置为零
+	Id       string  `json:"id"`       //资源在关系型数据库中的id，从id中可知类型
+	Hash     string  `json:"Hash"`     //文件在IPFS系统中的Hash值
+	Uploader string  `json:"Uploader"` //标记卖方id
+	Time     string  `json:"Time"`     //标记上链时间
+	Cost     float64 `json:"Cost"`     //交易需要话费的积分，可设置为零
 }
 
-type User struct{
+type User struct {
 	//ObjectType  string        `json:"docType"` //用于CouchDB
-	Id          string        `json:"id"`     //关系型数据库id
-	Upload      []Resource    `json:"Upload"` //上传的资源对象，json格式
-	Buy			[]Resource	 `json:"Buy"`   //购买的资源对象
-	Score       float64   	 `json:"Score"`  //积分
+	Id     string     `json:"id"`     //关系型数据库id
+	Upload []Resource `json:"Upload"` //上传的资源对象，json格式
+	Buy    []Resource `json:"Buy"`    //购买的资源对象
+	Score  float64    `json:"Score"`  //积分
 }
-type Deal struct{
+type Deal struct {
 	//ObjectType  string        `json:"docType"` //用于CouchDB
 	//Id          string        `json:"id"`     //联合主键  三个
-	Sell_id		string		 `json:"Sell_id"`
-	Buy_id		string		 `json:"Buy_id"`
-	Resource_id      string   `json:"Resource_id"` //上传的资源对象，json格式
-	Cost       float64   	 `json:"Cost"`  //积分
-	Time       string		 `json:"Time"` //交易完成时间（上链时间更准）
+	Sell_id     string  `json:"Sell_id"`
+	Buy_id      string  `json:"Buy_id"`
+	Resource_id string  `json:"Resource_id"` //上传的资源对象，json格式
+	Cost        float64 `json:"Cost"`        //积分
+	Time        string  `json:"Time"`        //交易完成时间（上链时间更准）
 }
 
-type ResourcePost struct{
+type ResourcePost struct {
 	//ObjectType string    `json:"docType"` //用于CouchDB
-	Id         string    `json:"id"` //资源在关系型数据库中的id，从id中可知类型
-	Hash	   string    `json:"Hash"`//文件在IPFS系统中的Hash值
-	Uploader   string    `json:"Uploader"`//标记卖方id
-	Time	   string	`json:"Time"`//标记上链时间
-	Cost       string   `json:"Cost"`//交易需要话费的积分，可设置为零\
-	GetScore   string   `json:"GetScore"`//交易需要话费的积分，可设置为零\
+	Id       string `json:"id"`       //资源在关系型数据库中的id，从id中可知类型
+	Hash     string `json:"Hash"`     //文件在IPFS系统中的Hash值
+	Uploader string `json:"Uploader"` //标记卖方id
+	Time     string `json:"Time"`     //标记上链时间
+	Cost     string `json:"Cost"`     //交易需要话费的积分，可设置为零\
+	GetScore string `json:"GetScore"` //交易需要话费的积分，可设置为零\
 }
 
-type UserPost struct{
+type UserPost struct {
 	//ObjectType  string        `json:"docType"` //用于CouchDB
-	Id          string        `json:"id"`     //关系型数据库id
-	Upload      []Resource    `json:"Upload"` //上传的资源对象，json格式
-	Buy			[]Resource	 `json:"Buy"`   //购买的资源对象
-	Score       string   	 `json:"Score"`  //积分
+	Id     string     `json:"id"`     //关系型数据库id
+	Upload []Resource `json:"Upload"` //上传的资源对象，json格式
+	Buy    []Resource `json:"Buy"`    //购买的资源对象
+	Score  string     `json:"Score"`  //积分
 }
-type DealPost struct{
+type DealPost struct {
 	//ObjectType  string        `json:"docType"` //用于CouchDB
 	//Id          string        `json:"id"`     //联合主键  三个
-	Sell_id		 string		 `json:"Sell_id"`
-	Buy_id		 string		 `json:"Buy_id"`
-	Resource_id string   	 `json:"Resource_id"` //上传的资源对象，json格式
-	Cost         string   	 `json:"Cost"`  //积分
-	Time         string	 `json:"Time"` //交易完成时间（上链时间更准）
+	Sell_id     string `json:"Sell_id"`
+	Buy_id      string `json:"Buy_id"`
+	Resource_id string `json:"Resource_id"` //上传的资源对象，json格式
+	Cost        string `json:"Cost"`        //积分
+	Time        string `json:"Time"`        //交易完成时间（上链时间更准）
 }
-
-
 
 // @Summary 创建用户，id，初始积分
 // @Produce  json
@@ -121,7 +119,7 @@ func UploadResource(c *gin.Context) {
 		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
 		return
 	}
-	if body.Id == "" || body.Hash == ""|| body.Uploader ==""||body.Time==""{
+	if body.Id == "" || body.Hash == "" || body.Uploader == "" || body.Time == "" {
 		appG.Response(http.StatusBadRequest, "失败", "除cost和getsocre外存在空参数")
 		return
 	}
@@ -133,7 +131,6 @@ func UploadResource(c *gin.Context) {
 	bodyBytes = append(bodyBytes, []byte(body.Time))
 	bodyBytes = append(bodyBytes, []byte(body.Cost))
 	bodyBytes = append(bodyBytes, []byte(body.GetScore))
-
 
 	//调用智能合约
 	resp, err := bc.ChannelExecute("uploadResource", bodyBytes)
@@ -163,7 +160,7 @@ func CreateDeal(c *gin.Context) {
 		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
 		return
 	}
-	if body.Sell_id == "" || body.Buy_id == ""|| body.Resource_id ==""||body.Time==""||body.Cost==""{
+	if body.Sell_id == "" || body.Buy_id == "" || body.Resource_id == "" || body.Time == "" || body.Cost == "" {
 		appG.Response(http.StatusBadRequest, "失败", "存在空参数")
 		return
 	}

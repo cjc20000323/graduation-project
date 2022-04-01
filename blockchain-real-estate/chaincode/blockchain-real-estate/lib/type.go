@@ -29,6 +29,7 @@ type User struct {
 	Buy     []string `json:"Buy"`     //购买的资源对象
 	Control []string `json:"Control"` //控制的代币
 	Share   []string `json:"Share"`   //他人分享的代币
+	Lend    []string `json:"Lend"`    //分享给他人的代币
 	Score   float64  `json:"Score"`   //积分
 }
 
@@ -44,13 +45,21 @@ type Deal struct {
 }
 
 type Token struct {
-	Id         string  `json:"id"`
-	Asset      string  `json:"asset"`
-	NotForSale bool    `json:"not_for_sale"`
-	Owner      string  `json:"owner"`
-	Bid        string  `json:"bid"`
-	Notes      string  `json:"notes"`
-	Value      float64 `json:"value"`
+	Id         string   `json:"id"`           //唯一标识token
+	Asset      string   `json:"asset"`        //唯一标识token所包含的资产
+	NotForSale bool     `json:"not_for_sale"` //是否可卖
+	Owner      string   `json:"owner"`        //所有人
+	Bid        string   `json:"bid"`          //投标人
+	Notes      string   `json:"notes"`        //简要描述
+	Value      float64  `json:"value"`        //价值
+	Time       string   `json:"time"`
+	Share      []string `json:"share"`
+}
+
+type Project struct {
+	Id   string `json:"id"`   //唯一标识project
+	Name string `json:"name"` //项目名称
+
 }
 
 //账户，虚拟管理员和若干业主账号

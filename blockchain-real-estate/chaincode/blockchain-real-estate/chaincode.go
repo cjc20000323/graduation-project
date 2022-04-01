@@ -80,6 +80,30 @@ func (t *BlockChainRealEstate) Invoke(stub shim.ChaincodeStubInterface) pb.Respo
 		return routers.TransferToken(stub, args)
 	case "getUserTokenList":
 		return routers.GetUserTokenList(stub, args)
+	case "shareToken":
+		return routers.ShareToken(stub, args)
+	case "redeemToken":
+		return routers.RedeemToken(stub, args)
+	case "changeResourceScore":
+		return routers.ChangeResourceScore(stub, args)
+	case "refuseTransferToken":
+		return routers.RefuseTransferToken(stub, args)
+	case "changeTokenSaleState":
+		return routers.ChangeTokenSaleState(stub, args)
+	case "queryUserBiddenToken":
+		return routers.QueryUserBiddenToken(stub, args)
+	case "queryUserResource":
+		return routers.QueryUserResource(stub, args)
+	case "giveToken":
+		return routers.GiveToken(stub, args)
+	case "judgeLendToken":
+		return routers.JudgeLendToken(stub, args)
+	case "queryUserLendToken":
+		return routers.QueryUserLendToken(stub, args)
+	case "queryUserSharedToken":
+		return routers.QueryUserSharedToken(stub, args)
+	case "queryTokenShare":
+		return routers.QueryTokenShare(stub, args)
 	default:
 		return shim.Error(fmt.Sprintf("没有该功能: %s", funcName))
 	}

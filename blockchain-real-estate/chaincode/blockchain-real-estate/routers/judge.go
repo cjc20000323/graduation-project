@@ -35,19 +35,18 @@ func JudgeOwnToken(stub shim.ChaincodeStubInterface, args []string) pb.Response 
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
 
-	for _, v := range user.Control {
-		if v == tokenId {
-			tokenByte, err := json.Marshal(token)
-			if err != nil {
-				return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
-			}
-			return shim.Success(tokenByte)
+	if token.Owner == userId {
+		tokenByte, err := json.Marshal(token)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
 		}
+		return shim.Success(tokenByte)
 	}
 
 	return shim.Error("The user does not own the token.")
 }
 
+//判断是否购买过某资源
 func JudgeBuyResource(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 2 {
 		return shim.Error("Please offer the right number of parameters.")
@@ -87,6 +86,7 @@ func JudgeBuyResource(stub shim.ChaincodeStubInterface, args []string) pb.Respon
 	return shim.Error("The user hasn't bought this resource.")
 }
 
+//判断目前是否拥有某资源
 func JudgeOwnResource(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 2 {
 		return shim.Error("Please offer the right number of parameters.")
@@ -113,22 +113,18 @@ func JudgeOwnResource(stub shim.ChaincodeStubInterface, args []string) pb.Respon
 		return shim.Error("The resource does not exist")
 	}
 
-	var token lib.Token
-
-	for _, v := range user.Control {
-		err = json.Unmarshal(ReadToken(stub, []string{v}).Payload, &token)
-		if token.Asset == resourceId {
-			resourceByte, err := json.Marshal(resource)
-			if err != nil {
-				return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
-			}
-			return shim.Success(resourceByte)
+	if resource.Owner == userId {
+		resourceByte, err := json.Marshal(resource)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
 		}
+		return shim.Success(resourceByte)
 	}
 
 	return shim.Error("The user does not own this resource.")
 }
 
+//判断是否有被分享某个资源
 func JudgeShareResource(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 2 {
 		return shim.Error("Please offer the right number of parameters.")
@@ -208,4 +204,43 @@ func JudgeShareToken(stub shim.ChaincodeStubInterface, args []string) pb.Respons
 	}
 
 	return shim.Error("The user is not shared this token.")
+}
+
+func JudgeLendToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 2 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	userId := args[0]
+	tokenId := args[1]
+
+	if tokenId == "" {
+		return shim.Error("Please offer the token id.")
+	}
+	if userId == "" {
+		return shim.Error("Please offer the user id.")
+	}
+
+	var user lib.User
+	err := json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &user)
+	if err != nil {
+		return shim.Error("The user does not exist.")
+	}
+	var token lib.Token
+	err = json.Unmarshal(ReadToken(stub, []string{tokenId}).Payload, &token)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	for _, v := range user.Lend {
+		if v == tokenId {
+			tokenByte, err := json.Marshal(token)
+			if err != nil {
+				return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
+			}
+			return shim.Success(tokenByte)
+		}
+	}
+
+	return shim.Error("The user does not lend this token.")
 }
