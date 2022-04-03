@@ -480,3 +480,32 @@ func QueryTokenShare(stub shim.ChaincodeStubInterface, args []string) pb.Respons
 	}
 	return shim.Success(userListByte)
 }
+
+func QueryProject(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	id := args[0]
+	if id == "" {
+		return shim.Error("Please offer the project id.")
+	}
+
+	var project lib.Project
+	result, err := utils.GetStateByPartialCompositeKeys(stub, lib.ProjectKey, args)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if result == nil {
+		return shim.Error("The project does not exist.")
+	}
+	err = json.Unmarshal(result[0], &project)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	projectByte, err := json.Marshal(project)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("ReadToken-序列化出错: %s", err))
+	}
+	return shim.Success(projectByte)
+}

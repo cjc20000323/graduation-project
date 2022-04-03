@@ -24,13 +24,14 @@ type Resource struct {
 
 type User struct {
 	//ObjectType  string        `json:"docType"` //用于CouchDB
-	Id      string   `json:"id"`      //关系型数据库id
-	Upload  []string `json:"Upload"`  //上传的资源对象，json格式
-	Buy     []string `json:"Buy"`     //购买的资源对象
-	Control []string `json:"Control"` //控制的代币
-	Share   []string `json:"Share"`   //他人分享的代币
-	Lend    []string `json:"Lend"`    //分享给他人的代币
-	Score   float64  `json:"Score"`   //积分
+	Id       string   `json:"id"`       //关系型数据库id
+	Upload   []string `json:"Upload"`   //上传的资源对象，json格式
+	Buy      []string `json:"Buy"`      //购买的资源对象
+	Control  []string `json:"Control"`  //控制的代币
+	Share    []string `json:"Share"`    //他人分享的代币
+	Lend     []string `json:"Lend"`     //分享给他人的代币
+	Projects []string `json:"Projects"` //用户上传的项目
+	Score    float64  `json:"Score"`    //积分
 }
 
 //其实并不需要交易记录表
@@ -57,9 +58,12 @@ type Token struct {
 }
 
 type Project struct {
-	Id   string `json:"id"`   //唯一标识project
-	Name string `json:"name"` //项目名称
-
+	Id    string   `json:"id"`    //唯一标识project
+	Name  string   `json:"name"`  //项目名称
+	Owner string   `json:"owner"` //所有者的id
+	Use   string   `json:"use"`   //采用的解决方案id
+	Bid   []string `json:"bid"`   //可考虑的所有解决方案
+	Time  string   `json:"time"`  //标记创建时间
 }
 
 //账户，虚拟管理员和若干业主账号
@@ -95,6 +99,7 @@ const (
 
 	AccountKey = "account-key"
 	TokenKey   = "token-key"
+	ProjectKey = "project-key"
 	//RealEstateKey      = "real-estate-key"
 	//SellingKey         = "selling-key"
 	//SellingBuyKey      = "selling-buy-key"

@@ -19,18 +19,27 @@ import (
 func typeof(v interface{}) string {
 	return fmt.Sprintf("%T", v)
 }
-type DealGet struct{
-	Sell_Id         string        `json:"sell_Id"`
-	Buy_id          string        `json:"buy_id"`
-	Resource_id		string	      `json:"resource_id"`
+
+type DealGet struct {
+	Sell_Id     string `json:"sell_Id"`
+	Buy_id      string `json:"buy_id"`
+	Resource_id string `json:"resource_id"`
 }
 
-type UserGet struct{
-	Id        string        `json:"Id"`
+type UserGet struct {
+	Id string `json:"Id"`
 }
 
-type ResourceGet struct{
-	Id        string        `json:"Id"`
+type ResourceGet struct {
+	Id string `json:"Id"`
+}
+
+type TokenGet struct {
+	Id string `json:"id"`
+}
+
+type ProjectGet struct {
+	Id string `json:"id"`
 }
 
 // @Summary 根据id查询资源
@@ -55,14 +64,13 @@ func QueryResource(c *gin.Context) {
 		appG.Response(http.StatusInternalServerError, "失败", err.Error())
 		return
 	}
-	res:=[]byte("["+string(resp.Payload[:])+"]")//因为链码放回不是列表，query和queryresource有
+	res := []byte("[" + string(resp.Payload[:]) + "]") //因为链码放回不是列表，query和queryresource有
 	// 反序列化json
 	var data []map[string]interface{}
 	if err = json.Unmarshal(bytes.NewBuffer(res).Bytes(), &data); err != nil {
 		appG.Response(http.StatusInternalServerError, "失败", err.Error())
 		return
 	}
-
 
 	appG.Response(http.StatusOK, "成功", data)
 }
@@ -111,7 +119,6 @@ func QueryAllResource(c *gin.Context) {
 	appG.Response(http.StatusOK, "成功", data)
 }
 
-
 // @Summary 交易记录
 // @Produce  json
 // @Success 200 {object} app.Response
@@ -135,7 +142,7 @@ func QueryAccount(c *gin.Context) {
 		return
 	}
 
-	res:=[]byte("["+string(resp.Payload[:])+"]")//因为链码放回不是列表，query和queryresource有
+	res := []byte("[" + string(resp.Payload[:]) + "]") //因为链码放回不是列表，query和queryresource有
 	// 反序列化json
 	var data []map[string]interface{}
 	if err = json.Unmarshal(bytes.NewBuffer(res).Bytes(), &data); err != nil {
@@ -225,4 +232,275 @@ func QueryDealResource(c *gin.Context) {
 	}
 	appG.Response(http.StatusOK, "成功", data)
 }
+
 //成功之后不显示所有信息
+
+func ReadToken(c *gin.Context) {
+	appG := app.Gin{C: c}
+	body := new(TokenGet)
+	//解析Body参数
+	if err := c.ShouldBind(body); err != nil {
+		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
+		return
+	}
+	var bodyBytes [][]byte
+
+	bodyBytes = append(bodyBytes, []byte(body.Id))
+
+	//调用智能合约
+	resp, err := bc.ChannelQuery("readToken", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	// 反序列化json
+	var data []map[string]interface{}
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
+func GetUserTokenList(c *gin.Context) {
+	appG := app.Gin{C: c}
+	body := new(UserGet)
+	//解析Body参数
+	if err := c.ShouldBind(body); err != nil {
+		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
+		return
+	}
+	var bodyBytes [][]byte
+
+	bodyBytes = append(bodyBytes, []byte(body.Id))
+
+	//调用智能合约
+	resp, err := bc.ChannelQuery("getUserTokenList", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	// 反序列化json
+	var data []map[string]interface{}
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
+func QueryUserBiddenToken(c *gin.Context) {
+	appG := app.Gin{C: c}
+	body := new(UserGet)
+	//解析Body参数
+	if err := c.ShouldBind(body); err != nil {
+		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
+		return
+	}
+	var bodyBytes [][]byte
+
+	bodyBytes = append(bodyBytes, []byte(body.Id))
+
+	//调用智能合约
+	resp, err := bc.ChannelQuery("queryUserBiddenToken", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	// 反序列化json
+	var data []map[string]interface{}
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
+func QueryUserResource(c *gin.Context) {
+	appG := app.Gin{C: c}
+	body := new(UserGet)
+	//解析Body参数
+	if err := c.ShouldBind(body); err != nil {
+		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
+		return
+	}
+	var bodyBytes [][]byte
+
+	bodyBytes = append(bodyBytes, []byte(body.Id))
+
+	//调用智能合约
+	resp, err := bc.ChannelQuery("queryUserResource", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	// 反序列化json
+	var data []map[string]interface{}
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
+func QueryUserSharedToken(c *gin.Context) {
+	appG := app.Gin{C: c}
+	body := new(UserGet)
+	//解析Body参数
+	if err := c.ShouldBind(body); err != nil {
+		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
+		return
+	}
+	var bodyBytes [][]byte
+
+	bodyBytes = append(bodyBytes, []byte(body.Id))
+
+	//调用智能合约
+	resp, err := bc.ChannelQuery("queryUserSharedToken", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	// 反序列化json
+	var data []map[string]interface{}
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
+func QueryUserLendToken(c *gin.Context) {
+	appG := app.Gin{C: c}
+	body := new(UserGet)
+	//解析Body参数
+	if err := c.ShouldBind(body); err != nil {
+		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
+		return
+	}
+	var bodyBytes [][]byte
+
+	bodyBytes = append(bodyBytes, []byte(body.Id))
+
+	//调用智能合约
+	resp, err := bc.ChannelQuery("queryUserLendToken", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	// 反序列化json
+	var data []map[string]interface{}
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
+func QueryTokenShare(c *gin.Context) {
+	appG := app.Gin{C: c}
+	body := new(TokenGet)
+	//解析Body参数
+	if err := c.ShouldBind(body); err != nil {
+		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
+		return
+	}
+	var bodyBytes [][]byte
+
+	bodyBytes = append(bodyBytes, []byte(body.Id))
+
+	//调用智能合约
+	resp, err := bc.ChannelQuery("queryTokenShare", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	// 反序列化json
+	var data []map[string]interface{}
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
+func QueryProject(c *gin.Context) {
+	appG := app.Gin{C: c}
+	body := new(ProjectGet)
+	//解析Body参数
+	if err := c.ShouldBind(body); err != nil {
+		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
+		return
+	}
+	var bodyBytes [][]byte
+
+	bodyBytes = append(bodyBytes, []byte(body.Id))
+
+	//调用智能合约
+	resp, err := bc.ChannelQuery("queryProject", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	// 反序列化json
+	var data []map[string]interface{}
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
+func QueryUserProject(c *gin.Context) {
+	appG := app.Gin{C: c}
+	body := new(UserGet)
+	//解析Body参数
+	if err := c.ShouldBind(body); err != nil {
+		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
+		return
+	}
+	var bodyBytes [][]byte
+
+	bodyBytes = append(bodyBytes, []byte(body.Id))
+
+	//调用智能合约
+	resp, err := bc.ChannelQuery("queryUserProject", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	// 反序列化json
+	var data []map[string]interface{}
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
+func QueryProjectResource(c *gin.Context) {
+	appG := app.Gin{C: c}
+	body := new(ProjectGet)
+	//解析Body参数
+	if err := c.ShouldBind(body); err != nil {
+		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
+		return
+	}
+	var bodyBytes [][]byte
+
+	bodyBytes = append(bodyBytes, []byte(body.Id))
+
+	//调用智能合约
+	resp, err := bc.ChannelQuery("queryProjectResource", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	// 反序列化json
+	var data []map[string]interface{}
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}

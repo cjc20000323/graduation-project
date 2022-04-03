@@ -269,8 +269,8 @@ func CreateToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	}
 	var token lib.Token
 	err = json.Unmarshal(ReadToken(stub, []string{id}).Payload, &token)
-	if err != nil {
-
+	if err == nil {
+		return shim.Error("The token has existed")
 	}
 
 	saleMessage, err := strconv.ParseBool(notforsale)
@@ -455,6 +455,9 @@ func GiveToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	}
 	if token.Owner != fromId {
 		return shim.Error("You don't have the token.")
+	}
+	if token.Bid == "" {
+		return shim.Error("This token has not been bid yet.")
 	}
 
 	var newToken lib.Token
@@ -890,4 +893,62 @@ func ChangeTokenSaleState(stub shim.ChaincodeStubInterface, args []string) pb.Re
 		return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
 	}
 	return shim.Success(tokenByte)
+}
+
+func CreateProject(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 4 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	id := args[0]
+	name := args[1]
+	owner := args[2]
+	Time := args[3]
+
+	if id == "" {
+		return shim.Error("Please offer the project id.")
+	}
+	if name == "" {
+		return shim.Error("Please offer the name of the project.")
+	}
+	if owner == "" {
+		return shim.Error("Please offer the owner of the project.")
+	}
+	if Time == "" {
+		return shim.Error("Please offer the time.")
+	}
+
+	var project lib.Project
+	err := json.Unmarshal(QueryProject(stub, []string{id}).Payload, &project)
+	if err == nil {
+		return shim.Error("The project has existed")
+	}
+
+	NewProject := &lib.Project{
+		Id:    id,
+		Name:  name,
+		Owner: owner,
+		Time:  args[3],
+		Use:   "",
+	}
+
+	if err := utils.WriteLedger(NewProject, stub, lib.ProjectKey, []string{id}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	var account lib.User
+	err = json.Unmarshal(QueryAccount(stub, []string{owner}).Payload, &account)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("用户信息验证失败%s", err))
+	}
+	account.Projects = append(account.Projects, id)
+	if err := utils.WriteLedger(account, stub, lib.UserKey, []string{account.Id}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	NewProjectByte, err := json.Marshal(NewProject)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
+	}
+	return shim.Success(NewProjectByte)
 }
