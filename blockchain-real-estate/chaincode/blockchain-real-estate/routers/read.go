@@ -313,9 +313,9 @@ func QueryUserBiddenToken(stub shim.ChaincodeStubInterface, args []string) pb.Re
 	}
 
 	var tokenList []lib.Token
-	var token lib.Token
 
 	for _, v := range user.Control {
+		var token lib.Token
 		err := json.Unmarshal(ReadToken(stub, []string{v}).Payload, &token)
 		if err != nil {
 			shim.Error(fmt.Sprintf("%s", err))
@@ -351,10 +351,10 @@ func QueryUserResource(stub shim.ChaincodeStubInterface, args []string) pb.Respo
 	}
 
 	var resourceList []lib.Resource
-	var token lib.Token
-	var resource lib.Resource
 
 	for _, v := range user.Control {
+		var token lib.Token
+		var resource lib.Resource
 		err := json.Unmarshal(ReadToken(stub, []string{v}).Payload, &token)
 		if err != nil {
 			shim.Error(fmt.Sprintf("%s", err))
@@ -392,9 +392,9 @@ func QueryUserSharedToken(stub shim.ChaincodeStubInterface, args []string) pb.Re
 	}
 
 	var tokenList []lib.Token
-	var token lib.Token
 
 	for _, v := range user.Share {
+		var token lib.Token
 		err := json.Unmarshal(ReadToken(stub, []string{v}).Payload, &token)
 		if err != nil {
 			shim.Error(fmt.Sprintf("%s", err))
@@ -428,9 +428,9 @@ func QueryUserLendToken(stub shim.ChaincodeStubInterface, args []string) pb.Resp
 	}
 
 	var tokenList []lib.Token
-	var token lib.Token
 
 	for _, v := range user.Lend {
+		var token lib.Token
 		err := json.Unmarshal(ReadToken(stub, []string{v}).Payload, &token)
 		if err != nil {
 			shim.Error(fmt.Sprintf("%s", err))
@@ -464,9 +464,9 @@ func QueryTokenShare(stub shim.ChaincodeStubInterface, args []string) pb.Respons
 	}
 
 	var userList []lib.User
-	var user lib.User
 
 	for _, v := range token.Share {
+		var user lib.User
 		err := json.Unmarshal(QueryAccount(stub, []string{v}).Payload, &user)
 		if err != nil {
 			shim.Error(fmt.Sprintf("%s", err))
@@ -508,4 +508,72 @@ func QueryProject(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 		return shim.Error(fmt.Sprintf("ReadToken-序列化出错: %s", err))
 	}
 	return shim.Success(projectByte)
+}
+
+func QueryUserProject(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	userId := args[0]
+	if userId == "" {
+		return shim.Error("Please offer the user id.")
+	}
+
+	var user lib.User
+	err := json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &user)
+	if err != nil {
+		return shim.Error("The user does not exist.")
+	}
+
+	var projectList []lib.Project
+
+	for _, v := range user.Projects {
+		var project lib.Project
+		err := json.Unmarshal(QueryProject(stub, []string{v}).Payload, &project)
+		if err != nil {
+			shim.Error(fmt.Sprintf("%s", err))
+		}
+		projectList = append(projectList, project)
+	}
+
+	projectListByte, err := json.Marshal(projectList)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("getUserTokenList-序列化出错: %s", err))
+	}
+	return shim.Success(projectListByte)
+}
+
+func QueryProjectResource(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	projectId := args[0]
+	if projectId == "" {
+		return shim.Error("Please offer the project id.")
+	}
+
+	var project lib.Project
+	err := json.Unmarshal(QueryProject(stub, []string{projectId}).Payload, &project)
+	if err != nil {
+		return shim.Error("The project does not exist.")
+	}
+
+	var resourceList []lib.Resource
+
+	for _, v := range project.Bid {
+		var resource lib.Resource
+		err := json.Unmarshal(QueryResource(stub, []string{v}).Payload, &resource)
+		if err != nil {
+			shim.Error(fmt.Sprintf("%s", err))
+		}
+		resourceList = append(resourceList, resource)
+	}
+
+	resourceListByte, err := json.Marshal(resourceList)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("getUserTokenList-序列化出错: %s", err))
+	}
+	return shim.Success(resourceListByte)
 }

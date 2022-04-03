@@ -456,8 +456,8 @@ func GiveToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if token.Owner != fromId {
 		return shim.Error("You don't have the token.")
 	}
-	if token.Bid == "" {
-		return shim.Error("This token has not been bid yet.")
+	if token.Bid != "" {
+		return shim.Error("This token has already been bid.")
 	}
 
 	var newToken lib.Token
@@ -479,7 +479,7 @@ func GiveToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
 
-	to.Control = append(to.Control, tokenId)
+	to.Control = append(to.Control, "new"+tokenId)
 	resource.Owner = toId
 
 	if err := utils.WriteLedger(to, stub, lib.UserKey, []string{to.Id}); err != nil {
@@ -639,16 +639,26 @@ func ShareToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 		return shim.Error("You don't have the token.")
 	}
 
-	var flag bool
+	var anotherToken lib.Token
+	err = json.Unmarshal(JudgeShareToken(stub, []string{toId}).Payload, &anotherToken)
+	if err != nil {
+		to.Share = append(to.Share, tokenId)
+		token.Share = append(token.Share, toId)
+		err = json.Unmarshal(JudgeLendToken(stub, []string{fromId, tokenId}).Payload, &anotherToken)
+		if err != nil {
+			from.Lend = append(from.Lend, tokenId)
+		}
+	}
+	/*var flag bool
 	flag = false
 	for _, v := range to.Share {
 		if v == tokenId {
 			flag = true
 			break
 		}
-	}
+	}*/
 	//这里可以换成写好的判断的智能合约
-	if !flag {
+	/*if !flag {
 		to.Share = append(to.Share, tokenId)
 		token.Share = append(token.Share, toId)
 		var anotherToken lib.Token
@@ -656,7 +666,7 @@ func ShareToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 		if err != nil {
 			from.Lend = append(from.Lend, tokenId)
 		}
-	}
+	}*/
 
 	if err := utils.WriteLedger(to, stub, lib.UserKey, []string{to.Id}); err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
@@ -951,4 +961,114 @@ func CreateProject(stub shim.ChaincodeStubInterface, args []string) pb.Response 
 		return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
 	}
 	return shim.Success(NewProjectByte)
+}
+
+func AddResourceToProject(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 3 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	userId := args[0]
+	tokenId := args[1]
+	projectId := args[2]
+
+	if tokenId == "" {
+		return shim.Error("Please offer the token id.")
+	}
+	if userId == "" {
+		return shim.Error("Please offer the user id.")
+	}
+	if projectId == "" {
+		return shim.Error("Please offer the project id.")
+	}
+
+	var user lib.User
+	err := json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &user)
+	if err != nil {
+		return shim.Error("The user does not exist.")
+	}
+	var token lib.Token
+	err = json.Unmarshal(ReadToken(stub, []string{tokenId}).Payload, &token)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	var project lib.Project
+	err = json.Unmarshal(QueryProject(stub, []string{projectId}).Payload, &project)
+	if err != nil {
+		return shim.Error("The project does not exist.")
+	}
+
+	err = json.Unmarshal(JudgeOwnToken(stub, []string{userId, tokenId}).Payload, &token)
+	if err != nil {
+		return shim.Error("The user does not own the token")
+	}
+
+	project.Bid = append(project.Bid, token.Asset)
+	if err := utils.WriteLedger(project, stub, lib.ProjectKey, []string{projectId}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	projectByte, err := json.Marshal(project)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
+	}
+	return shim.Success(projectByte)
+}
+
+func ChooseResourceForProject(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 3 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	userId := args[0]
+	resourceId := args[1]
+	projectId := args[2]
+
+	if resourceId == "" {
+		return shim.Error("Please offer the resource id.")
+	}
+	if userId == "" {
+		return shim.Error("Please offer the user id.")
+	}
+	if projectId == "" {
+		return shim.Error("Please offer the project id.")
+	}
+
+	var user lib.User
+	err := json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &user)
+	if err != nil {
+		return shim.Error("The user does not exist.")
+	}
+	var resource lib.Resource
+	err = json.Unmarshal(QueryResource(stub, []string{resourceId}).Payload, &resource)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	var project lib.Project
+	err = json.Unmarshal(QueryProject(stub, []string{projectId}).Payload, &project)
+	if err != nil {
+		return shim.Error("The project does not exist.")
+	}
+
+	err = json.Unmarshal(JudgeOwnProject(stub, []string{userId, projectId}).Payload, &project)
+	if err != nil {
+		return shim.Error("The user does not upload the project.")
+	}
+
+	for _, v := range project.Bid {
+		if v == resourceId {
+			project.Use = resourceId
+			if err := utils.WriteLedger(project, stub, lib.ProjectKey, []string{projectId}); err != nil {
+				return shim.Error(fmt.Sprintf("%s", err))
+			}
+			projectByte, err := json.Marshal(project)
+			if err != nil {
+				return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
+			}
+			return shim.Success(projectByte)
+		}
+	}
+
+	return shim.Error("The project can't choose this resource.")
+
 }

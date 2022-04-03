@@ -104,6 +104,20 @@ func (t *BlockChainRealEstate) Invoke(stub shim.ChaincodeStubInterface) pb.Respo
 		return routers.QueryUserSharedToken(stub, args)
 	case "queryTokenShare":
 		return routers.QueryTokenShare(stub, args)
+	case "judgeOwnProject":
+		return routers.JudgeOwnProject(stub, args)
+	case "queryProject":
+		return routers.QueryProject(stub, args)
+	case "createProject":
+		return routers.CreateProject(stub, args)
+	case "queryProjectResource":
+		return routers.QueryProjectResource(stub, args)
+	case "addResourceToProject":
+		return routers.AddResourceToProject(stub, args)
+	case "chooseResourceForProject":
+		return routers.ChooseResourceForProject(stub, args)
+	case "queryUserProject":
+		return routers.QueryUserProject(stub, args)
 	default:
 		return shim.Error(fmt.Sprintf("没有该功能: %s", funcName))
 	}

@@ -593,8 +593,8 @@ func ChangeTokenSaleState(c *gin.Context) {
 	}
 
 	var bodyBytes [][]byte
-	bodyBytes = append(bodyBytes, []byte(body.TokenId))
 	bodyBytes = append(bodyBytes, []byte(body.UserId))
+	bodyBytes = append(bodyBytes, []byte(body.TokenId))
 
 	//调用智能合约
 	resp, err := bc.ChannelExecute("changeTokenSaleState", bodyBytes)
