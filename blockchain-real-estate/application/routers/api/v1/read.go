@@ -253,9 +253,11 @@ func ReadToken(c *gin.Context) {
 		appG.Response(http.StatusInternalServerError, "失败", err.Error())
 		return
 	}
+
+	res := []byte("[" + string(resp.Payload[:]) + "]") //因为链码放回不是列表，query和queryresource有
 	// 反序列化json
 	var data []map[string]interface{}
-	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+	if err = json.Unmarshal(bytes.NewBuffer(res).Bytes(), &data); err != nil {
 		appG.Response(http.StatusInternalServerError, "失败", err.Error())
 		return
 	}
@@ -442,9 +444,11 @@ func QueryProject(c *gin.Context) {
 		appG.Response(http.StatusInternalServerError, "失败", err.Error())
 		return
 	}
+
+	res := []byte("[" + string(resp.Payload[:]) + "]") //因为链码放回不是列表，query和queryresource有
 	// 反序列化json
 	var data []map[string]interface{}
-	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+	if err = json.Unmarshal(bytes.NewBuffer(res).Bytes(), &data); err != nil {
 		appG.Response(http.StatusInternalServerError, "失败", err.Error())
 		return
 	}
