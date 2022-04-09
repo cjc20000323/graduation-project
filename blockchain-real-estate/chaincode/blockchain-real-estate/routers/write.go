@@ -61,7 +61,7 @@ func CreateUser(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 
 //创建数据资源
 func UploadResource(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	if len(args) != 6 {
+	if len(args) != 7 {
 		return shim.Error("Please offer the right number of parameters.")
 	}
 
@@ -71,8 +71,9 @@ func UploadResource(stub shim.ChaincodeStubInterface, args []string) pb.Response
 	Time := args[3]
 	Cost := args[4]
 	GetScore := args[5]
+	Kind := args[6]
 
-	if Id == "" || Hash == "" || Owner == "" || Time == "" || Cost == "" {
+	if Id == "" || Hash == "" || Owner == "" || Time == "" || Cost == "" || Kind == "" {
 		return shim.Error("参数存在空值")
 	}
 
@@ -96,6 +97,7 @@ func UploadResource(stub shim.ChaincodeStubInterface, args []string) pb.Response
 		Owner: args[2],
 		Time:  args[3],
 		Cost:  formattedCost,
+		Type:  args[6],
 	}
 	// 写入资源账本
 	if err := utils.WriteLedger(NewResource, stub, lib.ResourceKey, []string{NewResource.Id}); err != nil {
@@ -914,6 +916,7 @@ func CreateProject(stub shim.ChaincodeStubInterface, args []string) pb.Response 
 	name := args[1]
 	owner := args[2]
 	Time := args[3]
+	notes := args[4]
 
 	if id == "" {
 		return shim.Error("Please offer the project id.")
@@ -939,6 +942,7 @@ func CreateProject(stub shim.ChaincodeStubInterface, args []string) pb.Response 
 		Name:  name,
 		Owner: owner,
 		Time:  args[3],
+		Notes: notes,
 		Use:   "",
 	}
 

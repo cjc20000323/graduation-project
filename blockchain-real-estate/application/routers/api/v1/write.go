@@ -73,6 +73,7 @@ type ResourcePost struct {
 	Time     string `json:"Time"`     //标记上链时间
 	Cost     string `json:"Cost"`     //交易需要话费的积分，可设置为零\
 	GetScore string `json:"GetScore"` //交易需要话费的积分，可设置为零\
+	Type     string `json:"Type"`
 }
 
 type UserPost struct {
@@ -135,6 +136,7 @@ type ProjectPost struct {
 	Name  string `json:"name"`
 	Owner string `json:"owner"`
 	Time  string `json:"time"`
+	Notes string `json:"notes"`
 }
 
 type AddResourcePost struct {
@@ -199,7 +201,7 @@ func UploadResource(c *gin.Context) {
 		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
 		return
 	}
-	if body.Id == "" || body.Hash == "" || body.Uploader == "" || body.Time == "" {
+	if body.Id == "" || body.Hash == "" || body.Uploader == "" || body.Time == "" || body.Type == "" {
 		appG.Response(http.StatusBadRequest, "失败", "除cost和getsocre外存在空参数")
 		return
 	}
@@ -211,6 +213,7 @@ func UploadResource(c *gin.Context) {
 	bodyBytes = append(bodyBytes, []byte(body.Time))
 	bodyBytes = append(bodyBytes, []byte(body.Cost))
 	bodyBytes = append(bodyBytes, []byte(body.GetScore))
+	bodyBytes = append(bodyBytes, []byte(body.Type))
 
 	//调用智能合约
 	resp, err := bc.ChannelExecute("uploadResource", bodyBytes)
@@ -630,6 +633,7 @@ func CreateProject(c *gin.Context) {
 	bodyBytes = append(bodyBytes, []byte(body.Name))
 	bodyBytes = append(bodyBytes, []byte(body.Owner))
 	bodyBytes = append(bodyBytes, []byte(body.Time))
+	bodyBytes = append(bodyBytes, []byte(body.Notes))
 
 	//调用智能合约
 	resp, err := bc.ChannelExecute("createProject", bodyBytes)

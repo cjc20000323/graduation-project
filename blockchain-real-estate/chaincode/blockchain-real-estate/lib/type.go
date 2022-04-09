@@ -19,6 +19,7 @@ type Resource struct {
 	Time  string `json:"Time"` //标记上链时间
 	//State      string     `json:"State"`//只有未有对应解决方案的项目需求为true   没用
 	Cost float64 `json:"Cost"` //交易需要话费的积分，可设置为零
+	Type string  `json:"Type"`
 	//type
 }
 
@@ -61,6 +62,7 @@ type Project struct {
 	Id    string   `json:"id"`    //唯一标识project
 	Name  string   `json:"name"`  //项目名称
 	Owner string   `json:"owner"` //所有者的id
+	Notes string   `json:"notes"` //详细描述
 	Use   string   `json:"use"`   //采用的解决方案id
 	Bid   []string `json:"bid"`   //可考虑的所有解决方案
 	Time  string   `json:"time"`  //标记创建时间
