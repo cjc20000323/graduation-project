@@ -105,6 +105,15 @@ type DealPost struct {
 	Time        string `json:"Time"`        //交易完成时间（上链时间更准）
 }
 
+type TokenDealPost struct {
+	Sell_id     string `json:"Sell_id"`
+	Buy_id      string `json:"Buy_id"`
+	Resource_id string `json:"Resource_id"` //上传的资源对象，json格式
+	Cost        string `json:"Cost"`        //积分
+	Time        string `json:"Time"`        //交易完成时间（上链时间更准）
+	Type        string `json:"Type"`
+}
+
 type BidPost struct {
 	Id     string `json:"id"`
 	Bidder string `json:"bidder"`
@@ -705,6 +714,42 @@ func ChooseResourceForProject(c *gin.Context) {
 
 	//调用智能合约
 	resp, err := bc.ChannelExecute("chooseResourceForProject", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	var data map[string]interface{}
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
+func RecordDeal(c *gin.Context) {
+	appG := app.Gin{C: c}
+	body := new(TokenDealPost)
+
+	//解析Body参数
+	if err := c.ShouldBind(body); err != nil {
+		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
+		return
+	}
+
+	if body.Sell_id == "" || body.Buy_id == "" || body.Resource_id == "" || body.Cost == "" || body.Type == "" {
+		appG.Response(http.StatusBadRequest, "失败", "存在空参数")
+		return
+	}
+
+	var bodyBytes [][]byte
+	bodyBytes = append(bodyBytes, []byte(body.Sell_id))
+	bodyBytes = append(bodyBytes, []byte(body.Buy_id))
+	bodyBytes = append(bodyBytes, []byte(body.Resource_id))
+	bodyBytes = append(bodyBytes, []byte(body.Cost))
+	bodyBytes = append(bodyBytes, []byte(body.Type))
+
+	//调用智能合约
+	resp, err := bc.ChannelExecute("recordDeal", bodyBytes)
 	if err != nil {
 		appG.Response(http.StatusInternalServerError, "失败", err.Error())
 		return

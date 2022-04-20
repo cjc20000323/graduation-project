@@ -481,7 +481,7 @@ func GiveToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
 
-	to.Control = append(to.Control, "new"+tokenId)
+	to.Control = append(to.Control, tokenId)
 	resource.Owner = toId
 
 	if err := utils.WriteLedger(to, stub, lib.UserKey, []string{to.Id}); err != nil {
@@ -495,6 +495,15 @@ func GiveToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	err = json.Unmarshal(DeleteToken(stub, []string{tokenId}).Payload, &newAccount)
 	if err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	newToken.Id = tokenId
+	if err := utils.WriteLedger(newToken, stub, lib.TokenKey, []string{tokenId}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	err = utils.DelLedger(stub, lib.TokenKey, []string{"new" + tokenId})
+	if err != nil {
+		return shim.Error("Del Wrong.")
 	}
 
 	NewTokenByte, err := json.Marshal(newToken)
@@ -561,6 +570,7 @@ func TransferToken(stub shim.ChaincodeStubInterface, args []string) pb.Response 
 	if err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
+
 	err = json.Unmarshal(QueryAccount(stub, []string{token.Bid}).Payload, &bidder)
 	if err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
@@ -570,8 +580,8 @@ func TransferToken(stub shim.ChaincodeStubInterface, args []string) pb.Response 
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
 	bidder.Score -= token.Value
-	bidder.Control = append(bidder.Control, newToken.Id)
-	bidder.Buy = append(bidder.Buy, newToken.Asset) //可能会有重复，但不影响查询
+	bidder.Control = append(bidder.Control, token.Id)
+	bidder.Buy = append(bidder.Buy, token.Asset) //可能会有重复，但不影响查询
 	resource.Owner = bidder.Id
 	if err := utils.WriteLedger(bidder, stub, lib.UserKey, []string{bidder.Id}); err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
@@ -595,7 +605,15 @@ func TransferToken(stub shim.ChaincodeStubInterface, args []string) pb.Response 
 	if err := utils.WriteLedger(newAccount, stub, lib.UserKey, []string{transformer.Id}); err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
+	newToken.Id = tokenId
+	if err := utils.WriteLedger(newToken, stub, lib.TokenKey, []string{tokenId}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
 
+	err = utils.DelLedger(stub, lib.TokenKey, []string{"new" + tokenId})
+	if err != nil {
+		return shim.Error("Del Wrong.")
+	}
 	NewTokenByte, err := json.Marshal(newToken)
 	if err != nil {
 		return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
@@ -1074,5 +1092,66 @@ func ChooseResourceForProject(stub shim.ChaincodeStubInterface, args []string) p
 	}
 
 	return shim.Error("The project can't choose this resource.")
+
+}
+
+func RecordDeal(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 5 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	sell_id := args[0]
+	buy_id := args[1]
+	rescource_id := args[2]
+	cost := args[3] //多少买就必须多少走
+	Type := args[4]
+
+	if sell_id == "" {
+		return shim.Error("Please offer the sell_id.")
+	}
+	if buy_id == "" {
+		return shim.Error("Please offer the buy_id.")
+	}
+	if rescource_id == "" {
+		return shim.Error("Please offer Resource_id.")
+	}
+	if cost == "" {
+		return shim.Error("Please offer Cost.")
+	}
+	if Type == "" {
+		return shim.Error("Please offer type of deal.")
+	}
+
+	if sell_id == buy_id {
+		return shim.Error("The id of seller and buyer can't be the same.")
+	}
+
+	if Type != "share" && Type != "recommend" && Type != "transfer" && Type != "give" && Type != "redeem" {
+		return shim.Error("The type of trade is illegal.")
+	}
+
+	value, err := strconv.ParseFloat(cost, 64)
+	if err != nil {
+		return shim.Error("The value of the deal is not legal.")
+	}
+
+	NewDeal := &lib.TokenDeal{
+		Sell_id:     sell_id,
+		Buy_id:      buy_id,
+		Resource_id: rescource_id,
+		Cost:        value,
+		Type:        args[4],
+		Time:        time.Now().String(),
+	}
+
+	if err := utils.WriteLedger(NewDeal, stub, lib.DealKey, []string{NewDeal.Resource_id, NewDeal.Sell_id, NewDeal.Buy_id, Type, time.Now().String()}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	NewDealByte, err := json.Marshal(NewDeal)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
+	}
+	return shim.Success(NewDealByte)
 
 }

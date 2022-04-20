@@ -118,6 +118,10 @@ func (t *BlockChainRealEstate) Invoke(stub shim.ChaincodeStubInterface) pb.Respo
 		return routers.ChooseResourceForProject(stub, args)
 	case "queryUserProject":
 		return routers.QueryUserProject(stub, args)
+	case "recordDeal":
+		return routers.RecordDeal(stub, args)
+	case "queryDeal":
+		return routers.QueryDeal(stub, args)
 	default:
 		return shim.Error(fmt.Sprintf("没有该功能: %s", funcName))
 	}

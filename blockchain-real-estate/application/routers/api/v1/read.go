@@ -42,6 +42,10 @@ type ProjectGet struct {
 	Id string `json:"id"`
 }
 
+type TokenDealGet struct {
+	Id string `json:"Id"`
+}
+
 // @Summary 根据id查询资源
 // @Produce  json
 // @Success 200 {object} app.Response
@@ -496,6 +500,34 @@ func QueryProjectResource(c *gin.Context) {
 
 	//调用智能合约
 	resp, err := bc.ChannelQuery("queryProjectResource", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	// 反序列化json
+	var data []map[string]interface{}
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
+func QueryDeal(c *gin.Context) {
+	appG := app.Gin{C: c}
+	body := new(TokenDealGet)
+
+	//解析Body参数
+	if err := c.ShouldBind(body); err != nil {
+		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
+		return
+	}
+	var bodyBytes [][]byte
+
+	bodyBytes = append(bodyBytes, []byte(body.Id))
+
+	//调用智能合约
+	resp, err := bc.ChannelQuery("queryDeal", bodyBytes)
 	if err != nil {
 		appG.Response(http.StatusInternalServerError, "失败", err.Error())
 		return

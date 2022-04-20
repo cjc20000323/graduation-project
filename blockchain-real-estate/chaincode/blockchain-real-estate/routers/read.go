@@ -577,3 +577,30 @@ func QueryProjectResource(stub shim.ChaincodeStubInterface, args []string) pb.Re
 	}
 	return shim.Success(resourceListByte)
 }
+
+func QueryDeal(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	result, err := utils.GetStateByPartialCompositeKeys2(stub, lib.DealKey, args)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("获取历史信息错误: %s", err))
+	}
+	if err != nil {
+		return shim.Error(fmt.Sprintf("QueryDeal-序列化出错: %s", err))
+	}
+	var dealList []lib.TokenDeal
+	for _, v := range result {
+		if v != nil {
+			var tokenDeal lib.TokenDeal
+			err := json.Unmarshal(v, &tokenDeal)
+			if err != nil {
+				return shim.Error(fmt.Sprintf("Queryresourcelist-反序列化出错: %s", err))
+			}
+			dealList = append(dealList, tokenDeal)
+		}
+	}
+
+	deallistByte, err := json.Marshal(dealList)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("QueryDeal-序列化出错: %s", err))
+	}
+	return shim.Success(deallistByte)
+}

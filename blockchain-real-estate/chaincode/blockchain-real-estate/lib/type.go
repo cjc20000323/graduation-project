@@ -27,7 +27,7 @@ type User struct {
 	//ObjectType  string        `json:"docType"` //用于CouchDB
 	Id       string   `json:"id"`       //关系型数据库id
 	Upload   []string `json:"Upload"`   //上传的资源对象，json格式
-	Buy      []string `json:"Buy"`      //购买的资源对象
+	Buy      []string `json:"Buy"`      //购买过的资源对象
 	Control  []string `json:"Control"`  //控制的代币
 	Share    []string `json:"Share"`    //他人分享的代币
 	Lend     []string `json:"Lend"`     //分享给他人的代币
@@ -44,6 +44,15 @@ type Deal struct {
 	Rescource_id string    `json:"Rescource_id"` //上传的资源对象，json格式
 	Cost         float64   `json:"Cost"`         //积分
 	Time         time.Time `json:"Time"`         //交易完成时间（上链时间更准）
+}
+
+type TokenDeal struct {
+	Sell_id     string  `json:"Sell_Id"`
+	Buy_id      string  `json:"Buy_Id"`
+	Resource_id string  `json:"Resource_Id"`
+	Time        string  `json:"Time"`
+	Cost        float64 `json:"Cost"`
+	Type        string  `json:"Type"`
 }
 
 type Token struct {
@@ -64,7 +73,7 @@ type Project struct {
 	Owner string   `json:"owner"` //所有者的id
 	Notes string   `json:"notes"` //详细描述
 	Use   string   `json:"use"`   //采用的解决方案id
-	Bid   []string `json:"bid"`   //可考虑的所有解决方案
+	Bid   []string `json:"bid"`   //可考虑的所有解决方案，存储目前考虑资源的id而不是代币的id
 	Time  string   `json:"time"`  //标记创建时间
 }
 
