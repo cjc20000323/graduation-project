@@ -660,7 +660,7 @@ func ShareToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	}
 
 	var anotherToken lib.Token
-	err = json.Unmarshal(JudgeShareToken(stub, []string{toId}).Payload, &anotherToken)
+	err = json.Unmarshal(JudgeShareToken(stub, []string{toId, tokenId}).Payload, &anotherToken)
 	if err != nil {
 		to.Share = append(to.Share, tokenId)
 		token.Share = append(token.Share, toId)
@@ -668,6 +668,8 @@ func ShareToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 		if err != nil {
 			from.Lend = append(from.Lend, tokenId)
 		}
+	} else {
+		return shim.Error("This token has been shared with this user.")
 	}
 	/*var flag bool
 	flag = false
