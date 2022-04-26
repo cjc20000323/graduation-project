@@ -540,3 +540,63 @@ func QueryDeal(c *gin.Context) {
 	}
 	appG.Response(http.StatusOK, "成功", data)
 }
+
+func QueryAllDealSum(c *gin.Context) {
+	appG := app.Gin{C: c}
+	//调用智能合约
+
+	var bodyBytes [][]byte
+	resp, err := bc.ChannelQuery("queryAllDealSum", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+
+	// 反序列化json
+	var data float64
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
+func QueryAllResourceSum(c *gin.Context) {
+	appG := app.Gin{C: c}
+	//调用智能合约
+
+	var bodyBytes [][]byte
+	resp, err := bc.ChannelQuery("queryAllResourceSum", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+
+	// 反序列化json
+	var data float64
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
+func QueryAllUserSum(c *gin.Context) {
+	appG := app.Gin{C: c}
+	//调用智能合约
+
+	var bodyBytes [][]byte
+	resp, err := bc.ChannelQuery("queryAllUserSum", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+
+	// 反序列化json
+	var data float64
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}

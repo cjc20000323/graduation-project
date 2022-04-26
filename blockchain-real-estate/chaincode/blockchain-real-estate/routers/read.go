@@ -604,3 +604,97 @@ func QueryDeal(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	}
 	return shim.Success(deallistByte)
 }
+
+func QueryAllDealSum(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 0 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	results, err := utils.GetStateByPartialCompositeKeys(stub, lib.DealKey, args)
+
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if results == nil {
+		sum := 0
+		sumByte, err := json.Marshal(sum)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAllDealSum-序列化出错: %s", err))
+		}
+		return shim.Success(sumByte)
+	}
+	var sum = 0
+	for _, v := range results {
+		if v != nil {
+			sum++
+		}
+	}
+	sumByte, err := json.Marshal(sum)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("QueryAllDealSum-序列化出错: %s", err))
+	}
+	return shim.Success(sumByte)
+
+}
+
+func QueryAllResourceSum(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 0 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	results, err := utils.GetStateByPartialCompositeKeys(stub, lib.ResourceKey, args)
+
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if results == nil {
+		sum := 0
+		sumByte, err := json.Marshal(sum)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAllResourceSum-序列化出错: %s", err))
+		}
+		return shim.Success(sumByte)
+	}
+	var sum = 0
+	for _, v := range results {
+		if v != nil {
+			sum++
+		}
+	}
+	sumByte, err := json.Marshal(sum)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("QueryAllResourceSum-序列化出错: %s", err))
+	}
+	return shim.Success(sumByte)
+}
+
+func QueryAllUserSum(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 0 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	results, err := utils.GetStateByPartialCompositeKeys(stub, lib.UserKey, args)
+
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if results == nil {
+		sum := 0
+		sumByte, err := json.Marshal(sum)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAllDealSum-序列化出错: %s", err))
+		}
+		return shim.Success(sumByte)
+	}
+	var sum = 0
+	for _, v := range results {
+		if v != nil {
+			sum++
+		}
+	}
+	sumByte, err := json.Marshal(sum)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("QueryAllDealSum-序列化出错: %s", err))
+	}
+	return shim.Success(sumByte)
+}

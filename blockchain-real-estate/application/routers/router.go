@@ -71,6 +71,9 @@ func InitRouter() *gin.Engine {
 		apiV1.POST("/judgeOwnProject", v1.JudgeOwnProject)
 		apiV1.POST("/recordDeal", v1.RecordDeal)
 		apiV1.POST("/queryDeal", v1.QueryDeal)
+		apiV1.POST("/queryAllDealSum", v1.QueryAllDealSum)
+		apiV1.POST("/queryAllResourceSum", v1.QueryAllResourceSum)
+		apiV1.POST("/queryAllUserSum", v1.QueryAllUserSum)
 		//apiV1.POST("/downloadfile", v1.Downloadfile)下载对应ipfs/hash即可 但是下载不知道文件名，所以必须要求上传是zip文件
 
 	}
