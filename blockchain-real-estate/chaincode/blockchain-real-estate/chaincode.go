@@ -128,6 +128,8 @@ func (t *BlockChainRealEstate) Invoke(stub shim.ChaincodeStubInterface) pb.Respo
 		return routers.QueryAllResourceSum(stub, args)
 	case "queryAllUserSum":
 		return routers.QueryAllUserSum(stub, args)
+	case "queryAllBlockSum":
+		return routers.QueryAllBlockSum(stub, args)
 	default:
 		return shim.Error(fmt.Sprintf("没有该功能: %s", funcName))
 	}

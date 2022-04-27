@@ -600,3 +600,23 @@ func QueryAllUserSum(c *gin.Context) {
 	}
 	appG.Response(http.StatusOK, "成功", data)
 }
+
+func QueryAllBlockSum(c *gin.Context) {
+	appG := app.Gin{C: c}
+	//调用智能合约
+
+	var bodyBytes [][]byte
+	resp, err := bc.ChannelQuery("queryAllBlockSum", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+
+	// 反序列化json
+	var data float64
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}

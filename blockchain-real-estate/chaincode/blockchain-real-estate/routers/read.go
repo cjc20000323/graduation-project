@@ -698,3 +698,85 @@ func QueryAllUserSum(stub shim.ChaincodeStubInterface, args []string) pb.Respons
 	}
 	return shim.Success(sumByte)
 }
+
+func QueryAllBlockSum(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 0 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	results, err := utils.GetStateByPartialCompositeKeys(stub, lib.DealKey, args)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	var sum = 0
+
+	for _, v := range results {
+		var deal lib.Deal
+		err := json.Unmarshal(v, &deal)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAllBlockSum-反序列化出错: %s", err))
+		}
+		result, err := utils.GetHistoryForKeys(stub, lib.ResourceKey, args) //查找该资源得历史数据
+		for _, _ = range result {
+			sum++
+		}
+	}
+
+	results, err = utils.GetStateByPartialCompositeKeys(stub, lib.UserKey, args)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	for _, v := range results {
+		var deal lib.Deal
+		err := json.Unmarshal(v, &deal)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAllBlockSum-反序列化出错: %s", err))
+		}
+		result, err := utils.GetHistoryForKeys(stub, lib.ResourceKey, args) //查找该资源得历史数据
+		for _, _ = range result {
+			sum++
+		}
+	}
+
+	results, err = utils.GetStateByPartialCompositeKeys(stub, lib.ResourceKey, args)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	for _, v := range results {
+		var deal lib.Deal
+		err := json.Unmarshal(v, &deal)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAllBlockSum-反序列化出错: %s", err))
+		}
+		result, err := utils.GetHistoryForKeys(stub, lib.ResourceKey, args) //查找该资源得历史数据
+		for _, _ = range result {
+			sum++
+		}
+	}
+
+	results, err = utils.GetStateByPartialCompositeKeys(stub, lib.TokenKey, args)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	for _, v := range results {
+		var deal lib.Deal
+		err := json.Unmarshal(v, &deal)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAllBlockSum-反序列化出错: %s", err))
+		}
+		result, err := utils.GetHistoryForKeys(stub, lib.ResourceKey, args) //查找该资源得历史数据
+		for _, _ = range result {
+			sum++
+		}
+	}
+
+	sumByte, err := json.Marshal(sum)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("QueryAllBlockSum-序列化出错: %s", err))
+	}
+	return shim.Success(sumByte)
+}
