@@ -290,6 +290,9 @@ func CreateToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 		Time:       args[8],
 	}
 
+	if err := utils.WriteLedger(NewToken, stub, lib.TokenKey, []string{NewToken.Asset, NewToken.Time}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
 	if err := utils.WriteLedger(NewToken, stub, lib.TokenKey, []string{NewToken.Id}); err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
@@ -621,6 +624,94 @@ func TransferToken(stub shim.ChaincodeStubInterface, args []string) pb.Response 
 	return shim.Success(NewTokenByte)
 }
 
+func TransferToken2(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 2 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	tokenId := args[0]
+	userId := args[1]
+
+	if tokenId == "" {
+		return shim.Error("Please offer the token id.")
+	}
+	if userId == "" {
+		return shim.Error("Please offer the user id.")
+	}
+	var user lib.User
+	err := json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &user)
+	if err != nil {
+		return shim.Error("The user does not exist.")
+	}
+	var token lib.Token
+	err = json.Unmarshal(ReadToken(stub, []string{tokenId}).Payload, &token)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if token.NotForSale {
+		return shim.Error("This token is not for sale.")
+	}
+	if token.Owner != userId {
+		return shim.Error("You are not the owner of this token, so the change is illegal.")
+	}
+	if token.Bid == "" {
+		return shim.Error("This token has not been bid yet.")
+	}
+
+	var transformer lib.User
+	var bidder lib.User
+	var resource lib.Resource
+	err = json.Unmarshal(QueryAccount(stub, []string{userId}).Payload, &transformer)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	transformer.Score += token.Value
+	err = json.Unmarshal(QueryAccount(stub, []string{token.Bid}).Payload, &bidder)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	err = json.Unmarshal(QueryResource(stub, []string{token.Asset}).Payload, &resource)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	bidder.Score -= token.Value
+	bidder.Buy = append(bidder.Buy, token.Asset)
+	bidder.Control = append(bidder.Control, token.Id)
+	token.Bid = ""
+	token.Owner = bidder.Id
+	resource.Owner = bidder.Id
+
+	var newControl []string
+	for _, v := range transformer.Control {
+		if v != token.Id {
+			newControl = append(newControl, v)
+		}
+	}
+	transformer.Control = newControl
+
+	if err := utils.WriteLedger(transformer, stub, lib.UserKey, []string{transformer.Id}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if err := utils.WriteLedger(bidder, stub, lib.UserKey, []string{bidder.Id}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if err := utils.WriteLedger(token, stub, lib.TokenKey, []string{token.Id}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if err := utils.WriteLedger(token, stub, lib.TokenKey, []string{token.Asset, token.Time}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if err := utils.WriteLedger(resource, stub, lib.ResourceKey, []string{resource.Id}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	NewTokenByte, err := json.Marshal(token)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
+	}
+	return shim.Success(NewTokenByte)
+}
+
 func ShareToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(args) != 3 {
 		return shim.Error("Please offer the right number of parameters.")
@@ -643,6 +734,10 @@ func ShareToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 		return shim.Error("Please offer the token id.")
 	}
 
+	if fromId == toId {
+		return shim.Error("The from is the same as the to.")
+	}
+
 	err := json.Unmarshal(QueryAccount(stub, []string{fromId}).Payload, &from)
 	if err != nil {
 		return shim.Error("The user does not exist.")
@@ -660,16 +755,16 @@ func ShareToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	}
 
 	var anotherToken lib.Token
-	err = json.Unmarshal(JudgeShareToken(stub, []string{toId, tokenId}).Payload, &anotherToken)
+	err = json.Unmarshal(JudgeShareToken(stub, []string{toId, token.Id}).Payload, &anotherToken)
 	if err != nil {
-		to.Share = append(to.Share, tokenId)
+		to.Share = append(to.Share, token.Id)
 		token.Share = append(token.Share, toId)
-		err = json.Unmarshal(JudgeLendToken(stub, []string{fromId, tokenId}).Payload, &anotherToken)
+		err = json.Unmarshal(JudgeLendToken(stub, []string{fromId, token.Id}).Payload, &anotherToken)
 		if err != nil {
-			from.Lend = append(from.Lend, tokenId)
+			from.Lend = append(from.Lend, token.Id)
 		}
 	} else {
-		return shim.Error("This token has been shared with this user.")
+		return shim.Error("The token has shared with this user.")
 	}
 	/*var flag bool
 	flag = false
@@ -696,7 +791,10 @@ func ShareToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if err := utils.WriteLedger(from, stub, lib.UserKey, []string{from.Id}); err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
-	if err = utils.WriteLedger(token, stub, lib.TokenKey, []string{tokenId}); err != nil {
+	if err = utils.WriteLedger(token, stub, lib.TokenKey, []string{token.Id}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if err = utils.WriteLedger(token, stub, lib.TokenKey, []string{token.Asset, token.Time}); err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
 
@@ -744,7 +842,7 @@ func RedeemToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 
 	var newShares []string
 	for _, v := range to.Share {
-		if v != tokenId {
+		if v != token.Id {
 			newShares = append(newShares, v)
 		}
 	}
@@ -759,7 +857,7 @@ func RedeemToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if len(shares) == 0 {
 		var lend []string
 		for _, v := range from.Lend {
-			if v != tokenId {
+			if v != token.Id {
 				lend = append(lend, v)
 			}
 		}
@@ -772,7 +870,10 @@ func RedeemToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	if err := utils.WriteLedger(from, stub, lib.UserKey, []string{from.Id}); err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
-	if err = utils.WriteLedger(token, stub, lib.TokenKey, []string{tokenId}); err != nil {
+	if err = utils.WriteLedger(token, stub, lib.TokenKey, []string{token.Id}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if err = utils.WriteLedger(token, stub, lib.TokenKey, []string{token.Asset, token.Time}); err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
 
@@ -807,7 +908,7 @@ func ChangeResourceScore(stub shim.ChaincodeStubInterface, args []string) pb.Res
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
 
-	err = json.Unmarshal(JudgeOwnToken(stub, []string{userId, tokenId}).Payload, &token)
+	err = json.Unmarshal(JudgeOwnToken(stub, []string{userId, token.Id}).Payload, &token)
 	if err != nil {
 		return shim.Error("The user does not own the token")
 	}
@@ -826,6 +927,9 @@ func ChangeResourceScore(stub shim.ChaincodeStubInterface, args []string) pb.Res
 	}
 
 	if err := utils.WriteLedger(token, stub, lib.TokenKey, []string{token.Id}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if err = utils.WriteLedger(token, stub, lib.TokenKey, []string{token.Asset, token.Time}); err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
 	if err := utils.WriteLedger(resource, stub, lib.ResourceKey, []string{resource.Id}); err != nil {
@@ -859,7 +963,7 @@ func RefuseTransferToken(stub shim.ChaincodeStubInterface, args []string) pb.Res
 	var token lib.Token
 	err = json.Unmarshal(ReadToken(stub, []string{tokenId}).Payload, &token)
 
-	err = json.Unmarshal(JudgeOwnToken(stub, []string{userId, tokenId}).Payload, &token)
+	err = json.Unmarshal(JudgeOwnToken(stub, []string{userId, token.Id}).Payload, &token)
 	if err != nil {
 		return shim.Error("The user does not own the token")
 	}
@@ -877,6 +981,9 @@ func RefuseTransferToken(stub shim.ChaincodeStubInterface, args []string) pb.Res
 	token.Bid = ""
 
 	if err := utils.WriteLedger(token, stub, lib.TokenKey, []string{token.Id}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if err = utils.WriteLedger(token, stub, lib.TokenKey, []string{token.Asset, token.Time}); err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
 
@@ -909,7 +1016,7 @@ func ChangeTokenSaleState(stub shim.ChaincodeStubInterface, args []string) pb.Re
 	var token lib.Token
 	err = json.Unmarshal(ReadToken(stub, []string{tokenId}).Payload, &token)
 
-	err = json.Unmarshal(JudgeOwnToken(stub, []string{userId, tokenId}).Payload, &token)
+	err = json.Unmarshal(JudgeOwnToken(stub, []string{userId, token.Id}).Payload, &token)
 	if err != nil {
 		return shim.Error("The user does not own the token")
 	}
@@ -917,6 +1024,9 @@ func ChangeTokenSaleState(stub shim.ChaincodeStubInterface, args []string) pb.Re
 	token.NotForSale = !token.NotForSale
 
 	if err := utils.WriteLedger(token, stub, lib.TokenKey, []string{token.Id}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if err := utils.WriteLedger(token, stub, lib.TokenKey, []string{token.Asset, token.Time}); err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
 
@@ -1147,6 +1257,50 @@ func RecordDeal(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	}
 
 	if err := utils.WriteLedger(NewDeal, stub, lib.DealKey, []string{NewDeal.Resource_id, NewDeal.Sell_id, NewDeal.Buy_id, Type, time.Now().String()}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if err := utils.WriteLedger(NewDeal, stub, lib.DealKey, []string{NewDeal.Sell_id, NewDeal.Resource_id, NewDeal.Buy_id, Type, time.Now().String()}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	if err := utils.WriteLedger(NewDeal, stub, lib.DealKey, []string{NewDeal.Buy_id, NewDeal.Resource_id, NewDeal.Sell_id, Type, time.Now().String()}); err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	NewDealByte, err := json.Marshal(NewDeal)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
+	}
+	return shim.Success(NewDealByte)
+
+}
+
+func CreateCoinRecord(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 6 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	user := args[0]
+	direction := args[1]
+	Type := args[2]
+	name := args[3] //多少买就必须多少走
+	value := args[4]
+	Time := args[5]
+
+	cost, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return shim.Error("The value of the record is not legal.")
+	}
+
+	NewDeal := &lib.CoinRecord{
+		User:      user,
+		Direction: direction,
+		Type:      Type,
+		Name:      name,
+		Value:     cost,
+		Time:      Time,
+	}
+
+	if err := utils.WriteLedger(NewDeal, stub, lib.CoinRecordKey, []string{NewDeal.User, NewDeal.Direction, NewDeal.Type, NewDeal.Name, time.Now().String()}); err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
 

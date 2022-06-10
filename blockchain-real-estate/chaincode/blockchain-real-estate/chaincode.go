@@ -130,6 +130,16 @@ func (t *BlockChainRealEstate) Invoke(stub shim.ChaincodeStubInterface) pb.Respo
 		return routers.QueryAllUserSum(stub, args)
 	case "queryAllBlockSum":
 		return routers.QueryAllBlockSum(stub, args)
+	case "queryBuyDeal":
+		return routers.QueryBuyDeal(stub, args)
+	case "createCoinRecord":
+		return routers.CreateCoinRecord(stub, args)
+	case "queryCoinRecord":
+		return routers.QueryCoinRecord(stub, args)
+	case "transferToken2":
+		return routers.TransferToken2(stub, args)
+	case "queryBlock":
+		return routers.QueryBlock(stub, args)
 	default:
 		return shim.Error(fmt.Sprintf("没有该功能: %s", funcName))
 	}

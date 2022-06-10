@@ -239,7 +239,7 @@ func ReadToken(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 		return shim.Error("Please offer the token id.")
 	}
 	var token lib.Token
-	result, err := utils.GetStateByPartialCompositeKeys(stub, lib.TokenKey, args)
+	result, err := utils.GetStateByPartialCompositeKeys2(stub, lib.TokenKey, args)
 	if err != nil {
 		return shim.Error(fmt.Sprintf("%s", err))
 	}
@@ -779,4 +779,184 @@ func QueryAllBlockSum(stub shim.ChaincodeStubInterface, args []string) pb.Respon
 		return shim.Error(fmt.Sprintf("QueryAllBlockSum-序列化出错: %s", err))
 	}
 	return shim.Success(sumByte)
+}
+
+func QueryBuyDeal(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+	result, err := utils.GetStateByPartialCompositeKeys2(stub, lib.DealKey, args)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("获取历史信息错误: %s", err))
+	}
+	var dealList []lib.TokenDeal
+	for _, v := range result {
+		if v != nil {
+			var tokenDeal lib.TokenDeal
+			err := json.Unmarshal(v, &tokenDeal)
+			if err != nil {
+				return shim.Error(fmt.Sprintf("Queryresourcelist-反序列化出错: %s", err))
+			}
+			if tokenDeal.Type == "buy" || tokenDeal.Type == "transfer" {
+				dealList = append(dealList, tokenDeal)
+			}
+		}
+	}
+
+	deallistByte, err := json.Marshal(dealList)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("QueryDeal-序列化出错: %s", err))
+	}
+	return shim.Success(deallistByte)
+}
+
+func QueryCoinRecord(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Please offer the right number of parameters.")
+	}
+
+	result, err := utils.GetStateByPartialCompositeKeys2(stub, lib.CoinRecordKey, args)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("获取历史信息错误: %s", err))
+	}
+	var recordList []lib.CoinRecord
+
+	for _, v := range result {
+		if v != nil {
+			var record lib.CoinRecord
+			err := json.Unmarshal(v, &record)
+			if err != nil {
+				return shim.Error(fmt.Sprintf("Queryresourcelist-反序列化出错: %s", err))
+			}
+			recordList = append(recordList, record)
+		}
+	}
+
+	recordListByte, err := json.Marshal(recordList)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("QueryDeal-序列化出错: %s", err))
+	}
+	return shim.Success(recordListByte)
+}
+
+func QueryBlock(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	results, err := utils.GetStateByPartialCompositeKeys(stub, lib.TokenKey, args)
+
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+	var idList []string
+	for _, v := range results {
+		var token lib.Token
+		err := json.Unmarshal(v, &token)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAccountList-反序列化出错: %s", err))
+		}
+		result, err := utils.GetHistoryForKeysToken(stub, lib.TokenKey, []string{token.Id})
+		if err != nil {
+			return shim.Error(fmt.Sprintf("%s", err))
+		}
+		var list []lib.TokenHistory
+		err = json.Unmarshal(result, &list)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAccountList-反序列化出错: %s", err))
+		}
+		for _, data := range list {
+			if !IsContain(idList, data.TxId) {
+				idList = append(idList, data.TxId)
+			}
+		}
+	}
+	results, err = utils.GetStateByPartialCompositeKeys(stub, lib.UserKey, args)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	for _, v := range results {
+		var user lib.User
+		err := json.Unmarshal(v, &user)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAccountList-反序列化出错: %s", err))
+		}
+		result, err := utils.GetHistoryForKeysToken(stub, lib.UserKey, []string{user.Id})
+		if err != nil {
+			return shim.Error(fmt.Sprintf("%s", err))
+		}
+		var list []lib.UserHistory
+		err = json.Unmarshal(result, &list)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAccountList-反序列化出错: %s", err))
+		}
+		for _, data := range list {
+			if !IsContain(idList, data.TxId) {
+				idList = append(idList, data.TxId)
+			}
+		}
+	}
+
+	results, err = utils.GetStateByPartialCompositeKeys(stub, lib.ResourceKey, args)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	for _, v := range results {
+		var resource lib.Resource
+		err := json.Unmarshal(v, &resource)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAccountList-反序列化出错: %s", err))
+		}
+		result, err := utils.GetHistoryForKeysToken(stub, lib.ResourceKey, []string{resource.Id})
+		if err != nil {
+			return shim.Error(fmt.Sprintf("%s", err))
+		}
+		var list []lib.ResourceHistory
+		err = json.Unmarshal(result, &list)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAccountList-反序列化出错: %s", err))
+		}
+		for _, data := range list {
+			if !IsContain(idList, data.TxId) {
+				idList = append(idList, data.TxId)
+			}
+		}
+	}
+
+	results, err = utils.GetStateByPartialCompositeKeys(stub, lib.DealKey, args)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("%s", err))
+	}
+
+	for _, v := range results {
+		var deal lib.Deal
+		err := json.Unmarshal(v, &deal)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAccountList-反序列化出错: %s", err))
+		}
+		result, err := utils.GetHistoryForKeysToken(stub, lib.DealKey, []string{deal.Sell_id})
+		if err != nil {
+			return shim.Error(fmt.Sprintf("%s", err))
+		}
+		var list []lib.DealHistory
+		err = json.Unmarshal(result, &list)
+		if err != nil {
+			return shim.Error(fmt.Sprintf("QueryAccountList-反序列化出错: %s", err))
+		}
+		for _, data := range list {
+			if !IsContain(idList, data.TxId) {
+				idList = append(idList, data.TxId)
+			}
+		}
+	}
+
+	sumByte, err := json.Marshal(len(idList))
+	return shim.Success(sumByte)
+}
+
+func IsContain(items []string, item string) bool {
+	for _, eachItem := range items {
+		if eachItem == item {
+			return true
+		}
+	}
+	return false
 }

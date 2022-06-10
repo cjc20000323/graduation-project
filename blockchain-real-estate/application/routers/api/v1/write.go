@@ -114,6 +114,15 @@ type TokenDealPost struct {
 	Type        string `json:"Type"`
 }
 
+type CoinRecordPost struct {
+	User      string `json:"User"`
+	Direction string `json:"Direction"`
+	Type      string `json:"Type"`
+	Name      string `json:"Name"`
+	Value     string `json:"Value"`
+	Time      string `json:"Time"`
+}
+
 type BidPost struct {
 	Id     string `json:"id"`
 	Bidder string `json:"bidder"`
@@ -453,6 +462,39 @@ func TransferToken(c *gin.Context) {
 
 }
 
+func TransferToken2(c *gin.Context) {
+	appG := app.Gin{C: c}
+	body := new(TransferPost)
+
+	//解析Body参数
+	if err := c.ShouldBind(body); err != nil {
+		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
+		return
+	}
+
+	if body.UserId == "" || body.TokenId == "" {
+		appG.Response(http.StatusBadRequest, "失败", "存在空参数")
+		return
+	}
+
+	var bodyBytes [][]byte
+	bodyBytes = append(bodyBytes, []byte(body.TokenId))
+	bodyBytes = append(bodyBytes, []byte(body.UserId))
+
+	//调用智能合约
+	resp, err := bc.ChannelExecute("transferToken2", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	var data map[string]interface{}
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
 func ShareToken(c *gin.Context) {
 	appG := app.Gin{C: c}
 	body := new(GivePost)
@@ -747,6 +789,43 @@ func RecordDeal(c *gin.Context) {
 	bodyBytes = append(bodyBytes, []byte(body.Resource_id))
 	bodyBytes = append(bodyBytes, []byte(body.Cost))
 	bodyBytes = append(bodyBytes, []byte(body.Type))
+
+	//调用智能合约
+	resp, err := bc.ChannelExecute("recordDeal", bodyBytes)
+	if err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	var data map[string]interface{}
+	if err = json.Unmarshal(bytes.NewBuffer(resp.Payload).Bytes(), &data); err != nil {
+		appG.Response(http.StatusInternalServerError, "失败", err.Error())
+		return
+	}
+	appG.Response(http.StatusOK, "成功", data)
+}
+
+func CreateCoinRecord(c *gin.Context) {
+	appG := app.Gin{C: c}
+	body := new(CoinRecordPost)
+
+	//解析Body参数
+	if err := c.ShouldBind(body); err != nil {
+		appG.Response(http.StatusBadRequest, "失败", fmt.Sprintf("参数出错%s", err.Error()))
+		return
+	}
+
+	if body.User == "" || body.Direction == "" || body.Time == "" {
+		appG.Response(http.StatusBadRequest, "失败", "存在空参数")
+		return
+	}
+
+	var bodyBytes [][]byte
+	bodyBytes = append(bodyBytes, []byte(body.User))
+	bodyBytes = append(bodyBytes, []byte(body.Direction))
+	bodyBytes = append(bodyBytes, []byte(body.Type))
+	bodyBytes = append(bodyBytes, []byte(body.Name))
+	bodyBytes = append(bodyBytes, []byte(body.Value))
+	bodyBytes = append(bodyBytes, []byte(body.Time))
 
 	//调用智能合约
 	resp, err := bc.ChannelExecute("recordDeal", bodyBytes)

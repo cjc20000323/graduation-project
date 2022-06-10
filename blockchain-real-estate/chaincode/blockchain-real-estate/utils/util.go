@@ -96,14 +96,14 @@ func GetStateByPartialCompositeKeys(stub shim.ChaincodeStubInterface, objectType
 	return results, nil
 }
 
-func GetHistoryForKeys(stub shim.ChaincodeStubInterface, objectType string, keys []string) (results []byte,err error ){
+func GetHistoryForKeys(stub shim.ChaincodeStubInterface, objectType string, keys []string) (results []byte, err error) {
 	type AuditHistory struct {
-		TxId    string   `json:"txId"`
-		Value   lib.Resource   `json:"value"`
+		TxId  string       `json:"txId"`
+		Value lib.Resource `json:"value"`
 	}
-	var history []AuditHistory;
+	var history []AuditHistory
 	var resource lib.Resource
-	for _, v := range keys {//参数其实就一个
+	for _, v := range keys { //参数其实就一个
 		// 创建组合键
 		key, err := stub.CreateCompositeKey(objectType, []string{v})
 		if err != nil {
@@ -122,19 +122,180 @@ func GetHistoryForKeys(stub shim.ChaincodeStubInterface, objectType string, keys
 			var tx AuditHistory
 			tx.TxId = historyData.TxId
 			json.Unmarshal(historyData.Value, &resource)
-			if historyData.Value == nil {                  //marble has been deleted
+			if historyData.Value == nil { //marble has been deleted
 				var emptyResource lib.Resource
-				tx.Value = emptyResource                 //copy nil marble
+				tx.Value = emptyResource //copy nil marble
 			} else {
 				json.Unmarshal(historyData.Value, &resource) //un stringify it aka JSON.parse()
-				tx.Value = resource                      //copy marble over
+				tx.Value = resource                          //copy marble over
 			}
 			history = append(history, tx)
 		}
 	}
-	historyAsBytes, _ := json.Marshal(history)     //convert to array of bytes
-	return historyAsBytes,nil
+	historyAsBytes, _ := json.Marshal(history) //convert to array of bytes
+	return historyAsBytes, nil
 }
+
+func GetHistoryForKeysToken(stub shim.ChaincodeStubInterface, objectType string, keys []string) (results []byte, err error) {
+	type AuditHistory struct {
+		TxId  string    `json:"txId"`
+		Value lib.Token `json:"value"`
+	}
+	var history []AuditHistory
+	var resource lib.Token
+	for _, v := range keys { //参数其实就一个
+		// 创建组合键
+		key, err := stub.CreateCompositeKey(objectType, []string{v})
+		if err != nil {
+			return nil, errors.New(fmt.Sprintf("%s创建组合键出错: %s", objectType, err))
+		}
+		// 从账本中获取数据
+
+		resultsIterator, err := stub.GetHistoryForKey(key)
+
+		defer resultsIterator.Close()
+		for resultsIterator.HasNext() {
+			historyData, err := resultsIterator.Next()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("%s迭代出错: %s", objectType, err))
+			}
+			var tx AuditHistory
+			tx.TxId = historyData.TxId
+			json.Unmarshal(historyData.Value, &resource)
+			if historyData.Value == nil { //marble has been deleted
+				var emptyResource lib.Token
+				tx.Value = emptyResource //copy nil marble
+			} else {
+				json.Unmarshal(historyData.Value, &resource) //un stringify it aka JSON.parse()
+				tx.Value = resource                          //copy marble over
+			}
+			history = append(history, tx)
+		}
+	}
+	historyAsBytes, _ := json.Marshal(history) //convert to array of bytes
+	return historyAsBytes, nil
+}
+
+func GetHistoryForKeysDeal(stub shim.ChaincodeStubInterface, objectType string, keys []string) (results []byte, err error) {
+	type AuditHistory struct {
+		TxId  string   `json:"txId"`
+		Value lib.Deal `json:"value"`
+	}
+	var history []AuditHistory
+	var resource lib.Deal
+	for _, v := range keys { //参数其实就一个
+		// 创建组合键
+		key, err := stub.CreateCompositeKey(objectType, []string{v})
+		if err != nil {
+			return nil, errors.New(fmt.Sprintf("%s创建组合键出错: %s", objectType, err))
+		}
+		// 从账本中获取数据
+
+		resultsIterator, err := stub.GetHistoryForKey(key)
+
+		defer resultsIterator.Close()
+		for resultsIterator.HasNext() {
+			historyData, err := resultsIterator.Next()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("%s迭代出错: %s", objectType, err))
+			}
+			var tx AuditHistory
+			tx.TxId = historyData.TxId
+			json.Unmarshal(historyData.Value, &resource)
+			if historyData.Value == nil { //marble has been deleted
+				var emptyResource lib.Deal
+				tx.Value = emptyResource //copy nil marble
+			} else {
+				json.Unmarshal(historyData.Value, &resource) //un stringify it aka JSON.parse()
+				tx.Value = resource                          //copy marble over
+			}
+			history = append(history, tx)
+		}
+	}
+	historyAsBytes, _ := json.Marshal(history) //convert to array of bytes
+	return historyAsBytes, nil
+}
+
+func GetHistoryForKeysUser(stub shim.ChaincodeStubInterface, objectType string, keys []string) (results []byte, err error) {
+	type AuditHistory struct {
+		TxId  string   `json:"txId"`
+		Value lib.User `json:"value"`
+	}
+	var history []AuditHistory
+	var resource lib.User
+	for _, v := range keys { //参数其实就一个
+		// 创建组合键
+		key, err := stub.CreateCompositeKey(objectType, []string{v})
+		if err != nil {
+			return nil, errors.New(fmt.Sprintf("%s创建组合键出错: %s", objectType, err))
+		}
+		// 从账本中获取数据
+
+		resultsIterator, err := stub.GetHistoryForKey(key)
+
+		defer resultsIterator.Close()
+		for resultsIterator.HasNext() {
+			historyData, err := resultsIterator.Next()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("%s迭代出错: %s", objectType, err))
+			}
+			var tx AuditHistory
+			tx.TxId = historyData.TxId
+			json.Unmarshal(historyData.Value, &resource)
+			if historyData.Value == nil { //marble has been deleted
+				var emptyResource lib.User
+				tx.Value = emptyResource //copy nil marble
+			} else {
+				json.Unmarshal(historyData.Value, &resource) //un stringify it aka JSON.parse()
+				tx.Value = resource                          //copy marble over
+			}
+			history = append(history, tx)
+		}
+	}
+	historyAsBytes, _ := json.Marshal(history) //convert to array of bytes
+	return historyAsBytes, nil
+}
+
+func GetHistoryForKeysResource(stub shim.ChaincodeStubInterface, objectType string, keys []string) (results []byte, err error) {
+	type AuditHistory struct {
+		TxId  string       `json:"txId"`
+		Value lib.Resource `json:"value"`
+	}
+	var history []AuditHistory
+	var resource lib.Resource
+	for _, v := range keys { //参数其实就一个
+		// 创建组合键
+		key, err := stub.CreateCompositeKey(objectType, []string{v})
+		if err != nil {
+			return nil, errors.New(fmt.Sprintf("%s创建组合键出错: %s", objectType, err))
+		}
+		// 从账本中获取数据
+
+		resultsIterator, err := stub.GetHistoryForKey(key)
+
+		defer resultsIterator.Close()
+		for resultsIterator.HasNext() {
+			historyData, err := resultsIterator.Next()
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("%s迭代出错: %s", objectType, err))
+			}
+			var tx AuditHistory
+			tx.TxId = historyData.TxId
+			json.Unmarshal(historyData.Value, &resource)
+			if historyData.Value == nil { //marble has been deleted
+				var emptyResource lib.Resource
+				tx.Value = emptyResource //copy nil marble
+			} else {
+				json.Unmarshal(historyData.Value, &resource) //un stringify it aka JSON.parse()
+				tx.Value = resource                          //copy marble over
+			}
+			history = append(history, tx)
+		}
+	}
+	historyAsBytes, _ := json.Marshal(history) //convert to array of bytes
+	return historyAsBytes, nil
+}
+
 //根据复合主键查询数据(适合获取全部或指定的数据)
 func GetStateByPartialCompositeKeys2(stub shim.ChaincodeStubInterface, objectType string, keys []string) (results [][]byte, err error) {
 	// 通过主键从区块链查找相关的数据，相当于对主键的模糊查询

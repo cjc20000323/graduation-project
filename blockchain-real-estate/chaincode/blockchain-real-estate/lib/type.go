@@ -55,6 +55,15 @@ type TokenDeal struct {
 	Type        string  `json:"Type"`
 }
 
+type CoinRecord struct {
+	User      string  `json:"User"`
+	Direction string  `json:"Direction"`
+	Type      string  `json:"Type"`
+	Name      string  `json:"Name"`
+	Value     float64 `json:"Value"`
+	Time      string  `json:"Time"`
+}
+
 type Token struct {
 	Id         string   `json:"id"`           //唯一标识token
 	Asset      string   `json:"asset"`        //唯一标识token所包含的资产
@@ -75,6 +84,26 @@ type Project struct {
 	Use   string   `json:"use"`   //采用的解决方案id
 	Bid   []string `json:"bid"`   //可考虑的所有解决方案，存储目前考虑资源的id而不是代币的id
 	Time  string   `json:"time"`  //标记创建时间
+}
+
+type TokenHistory struct {
+	TxId  string `json:"txId"`
+	Value Token  `json:"value"`
+}
+
+type ResourceHistory struct {
+	TxId  string   `json:"txId"`
+	Value Resource `json:"value"`
+}
+
+type DealHistory struct {
+	TxId  string `json:"txId"`
+	Value Deal   `json:"value"`
+}
+
+type UserHistory struct {
+	TxId  string `json:"txId"`
+	Value User   `json:"value"`
 }
 
 //账户，虚拟管理员和若干业主账号
@@ -104,9 +133,10 @@ type Account struct {
 //}
 
 const (
-	UserKey     = "user-key"
-	ResourceKey = "resource-key"
-	DealKey     = "deal-key"
+	UserKey       = "user-key"
+	ResourceKey   = "resource-key"
+	DealKey       = "deal-key"
+	CoinRecordKey = "coin-record-key"
 
 	AccountKey = "account-key"
 	TokenKey   = "token-key"

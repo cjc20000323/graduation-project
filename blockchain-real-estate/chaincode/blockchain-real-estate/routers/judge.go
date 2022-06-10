@@ -193,7 +193,7 @@ func JudgeShareToken(stub shim.ChaincodeStubInterface, args []string) pb.Respons
 	}
 
 	for _, v := range user.Share {
-		if v == tokenId {
+		if v == token.Id {
 			tokenByte, err := json.Marshal(token)
 			if err != nil {
 				return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
@@ -232,7 +232,7 @@ func JudgeLendToken(stub shim.ChaincodeStubInterface, args []string) pb.Response
 	}
 
 	for _, v := range user.Lend {
-		if v == tokenId {
+		if v == token.Id {
 			tokenByte, err := json.Marshal(token)
 			if err != nil {
 				return shim.Error(fmt.Sprintf("序列化成功创建的信息出错: %s", err))
